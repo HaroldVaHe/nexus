@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getItemAsync, setItemAsync, deleteItemAsync, TOKEN_KEY, USER_KEY } from '@/utils/storage';
+import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 interface User {
   id: string;
@@ -38,6 +39,34 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
 });
 
+const TOKEN_KEY = 'nexus_auth_token';
+const USER_KEY = 'nexus_auth_user';
+
+const isWeb = Platform.OS === 'web';
+
+function getItem(key: string): Promise<string | null> {
+  if (isWeb) {
+    try { return Promise.resolve(localStorage.getItem(key)); } catch { return Promise.resolve(null); }
+  }
+  return SecureStore.getItemAsync(key);
+}
+
+function setItem(key: string, value: string): Promise<void> {
+  if (isWeb) {
+    try { localStorage.setItem(key, value); } catch {}
+    return Promise.resolve();
+  }
+  return SecureStore.setItemAsync(key, value);
+}
+
+function deleteItem(key: string): Promise<void> {
+  if (isWeb) {
+    try { localStorage.removeItem(key); } catch {}
+    return Promise.resolve();
+  }
+  return SecureStore.deleteItemAsync(key);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -49,8 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadStoredAuth = async () => {
     try {
-      const storedToken = await getItemAsync(TOKEN_KEY);
-      const storedUser = await getItemAsync(USER_KEY);
+      const storedToken = await getItem(TOKEN_KEY);
+      const storedUser = await getItem(USER_KEY);
 
       if (storedToken && storedUser) {
         setToken(storedToken);
@@ -77,15 +106,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       status: userFields.status,
     };
 
-    await setItemAsync(TOKEN_KEY, String(accessToken));
-    await setItemAsync(USER_KEY, JSON.stringify(userData));
+    await setItem(TOKEN_KEY, String(accessToken));
+    await setItem(USER_KEY, JSON.stringify(userData));
     setToken(String(accessToken));
     setUser(userData);
   }, []);
 
   const logout = useCallback(async () => {
-    await deleteItemAsync(TOKEN_KEY);
-    await deleteItemAsync(USER_KEY);
+    try { await deleteItem(TOKEN_KEY); } catch {}
+    try { await deleteItem(USER_KEY); } catch {}
     setToken(null);
     setUser(null);
   }, []);
