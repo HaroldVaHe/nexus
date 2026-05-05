@@ -56,5 +56,5 @@ web.config
 @eaDir/
 
 # Documents (keep local, not for repo)
-*.docx
-*.pdf
+#*.docx
+#*.pdf
