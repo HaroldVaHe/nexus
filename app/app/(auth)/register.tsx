@@ -14,6 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { LoginButton } from '@/components/LoginButton';
 import { colors, borderRadius, typography, spacing } from '@/theme/colors';
+import { Ionicons } from '@expo/vector-icons';
 import { validateInstitutionalEmail } from '@/utils/config';
 import { apiClient } from '@/api/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -32,6 +33,7 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedRoles, setSelectedRoles] = useState<('driver' | 'passenger')[]>(['passenger']);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -56,6 +58,10 @@ export default function RegisterScreen() {
       newErrors.confirmPassword = 'Las contraseñas no coinciden';
     }
 
+    if (selectedRoles.length === 0) {
+      newErrors.roles = 'Selecciona al menos un rol';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -71,6 +77,7 @@ export default function RegisterScreen() {
         full_name: fullName,
         faculty: faculty || undefined,
         phone: phone || undefined,
+        roles: selectedRoles,
       });
 
       await login(response);
@@ -85,7 +92,7 @@ export default function RegisterScreen() {
     } finally {
       setLoading(false);
     }
-  }, [fullName, email, phone, faculty, password, confirmPassword, router, login]);
+  }, [fullName, email, phone, faculty, password, confirmPassword, selectedRoles, router, login]);
 
   const renderInput = (
     label: string,
@@ -175,6 +182,52 @@ export default function RegisterScreen() {
               placeholder: 'Ej: Ingeniería',
               icon: '🏛',
             })}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>¿Cómo usarás Nexus?</Text>
+              <Text style={styles.roleSubtext}>Selecciona al menos una opción</Text>
+              <View style={styles.roleContainer}>
+                <TouchableOpacity
+                  style={[styles.roleChip, selectedRoles.includes('passenger') && styles.roleChipSelected]}
+                  onPress={() => {
+                    if (selectedRoles.includes('passenger')) {
+                      setSelectedRoles(selectedRoles.filter(r => r !== 'passenger'));
+                    } else {
+                      setSelectedRoles([...selectedRoles, 'passenger']);
+                    }
+                  }}
+                >
+                  <Ionicons
+                    name="person"
+                    size={18}
+                    color={selectedRoles.includes('passenger') ? colors.primary.contrast : colors.text.secondary}
+                  />
+                  <Text style={[styles.roleText, selectedRoles.includes('passenger') && styles.roleTextSelected]}>
+                    Pasajero
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.roleChip, selectedRoles.includes('driver') && styles.roleChipSelected]}
+                  onPress={() => {
+                    if (selectedRoles.includes('driver')) {
+                      setSelectedRoles(selectedRoles.filter(r => r !== 'driver'));
+                    } else {
+                      setSelectedRoles([...selectedRoles, 'driver']);
+                    }
+                  }}
+                >
+                  <Ionicons
+                    name="car-sport"
+                    size={18}
+                    color={selectedRoles.includes('driver') ? colors.primary.contrast : colors.text.secondary}
+                  />
+                  <Text style={[styles.roleText, selectedRoles.includes('driver') && styles.roleTextSelected]}>
+                    Conductor
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {errors.roles ? <Text style={styles.errorText}>{errors.roles}</Text> : null}
+            </View>
 
             {renderInput('Contraseña', password, setPassword, errors.password, {
               placeholder: 'Mínimo 8 caracteres',
@@ -313,6 +366,43 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     marginLeft: spacing.xs,
     fontFamily: typography.family.medium,
+  },
+  roleSubtext: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.muted,
+    marginBottom: spacing.sm,
+    fontFamily: typography.family.regular,
+  },
+  roleContainer: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  roleChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.card,
+    gap: spacing.xs,
+  },
+  roleChipSelected: {
+    backgroundColor: colors.secondary.default,
+    borderColor: colors.secondary.default,
+  },
+  roleText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.text.secondary,
+    fontFamily: typography.family.medium,
+  },
+  roleTextSelected: {
+    color: colors.primary.contrast,
+    fontWeight: typography.weights.semibold,
   },
   termsContainer: {
     flexDirection: 'row',

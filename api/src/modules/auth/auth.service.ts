@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../../database/entities/user.entity';
+import { UserRole } from '../../database/entities/user-role.entity';
 import { RegisterDto } from './dto/register.dto';
 import { MicrosoftAuthDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
@@ -14,6 +15,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(UserRole)
+    private userRolesRepository: Repository<UserRole>,
     private jwtService: JwtService,
   ) {}
 
@@ -45,6 +48,14 @@ export class AuthService {
     });
 
     const savedUser = await this.usersRepository.save(user);
+
+    const roles = [...new Set(registerDto.roles)];
+    const roleEntities = roles.map((role) =>
+      this.userRolesRepository.create({ user_id: savedUser.id, role }),
+    );
+    await this.userRolesRepository.save(roleEntities);
+
+    savedUser.user_roles = roleEntities;
     const tokens = await this.generateTokens(savedUser);
 
     return {
@@ -79,8 +90,20 @@ export class AuthService {
       throw new BadRequestException('Only @unisabana.edu.co emails are allowed');
     }
 
-    const user = await this.validateUser(email, password);
+    const user = await this.usersRepository.findOne({
+      where: { email: email.toLowerCase() },
+      relations: ['user_roles'],
+    });
     if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (!user.password_hash) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -105,6 +128,7 @@ export class AuthService {
 
     let user = await this.usersRepository.findOne({
       where: { email: email.toLowerCase() },
+      relations: ['user_roles'],
     });
 
     if (!user) {
@@ -115,6 +139,10 @@ export class AuthService {
         refresh_token: dto.refreshToken || null,
       });
       user = await this.usersRepository.save(user);
+
+      const defaultRole = this.userRolesRepository.create({ user_id: user.id, role: 'passenger' });
+      await this.userRolesRepository.save(defaultRole);
+      user.user_roles = [defaultRole];
     } else {
       await this.usersRepository.update(user.id, {
         ms_graph_token: dto.accessToken,
@@ -148,7 +176,11 @@ export class AuthService {
   }
 
   private async generateTokens(user: User) {
-    const payload = { sub: user.id, email: user.email };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      roles: user.user_roles?.map((r) => r.role) || [],
+    };
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: process.env.JWT_EXPIRATION || '7d',
@@ -166,6 +198,7 @@ export class AuthService {
       ...sanitized,
       average_rating: Number(user.average_rating),
       total_trips: user.total_trips,
+      roles: user.user_roles?.map((r) => r.role) || [],
     };
   }
 

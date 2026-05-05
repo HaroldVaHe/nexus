@@ -25,7 +25,7 @@ class ApiClient {
     return response.json();
   }
 
-  async register(data: { email: string; password: string; full_name: string; faculty?: string; phone?: string }) {
+  async register(data: { email: string; password: string; full_name: string; faculty?: string; phone?: string; roles: ('driver' | 'passenger')[] }) {
     return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),

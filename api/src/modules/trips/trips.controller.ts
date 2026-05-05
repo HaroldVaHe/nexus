@@ -14,9 +14,12 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { TripsService } from './trips.service';
 import { CreateTripDto, SearchTripsDto } from './dto/trip.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/roles.guard';
+import { Roles } from '../../common/roles.decorator';
 
 @ApiTags('trips')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('trips')
 export class TripsController {
   constructor(private readonly tripsService: TripsService) {}
@@ -31,19 +34,19 @@ export class TripsController {
     return this.tripsService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Roles('driver')
   @Post()
   async create(@Body() createTripDto: CreateTripDto, @Req() req: any) {
     return this.tripsService.create(createTripDto, req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Roles('driver')
   @Put(':id/cancel')
   async cancelTrip(@Param('id') id: string, @Req() req: any) {
     return this.tripsService.cancelTrip(id, req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Roles('driver')
   @Get('driver/my')
   async findMyTrips(@Req() req: any) {
     return this.tripsService.findByDriver(req.user.id);

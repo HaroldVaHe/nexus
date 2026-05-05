@@ -1,4 +1,5 @@
 export { User } from './user.entity';
+export { UserRole } from './user-role.entity';
 export { Trip } from './trip.entity';
 export { Booking } from './booking.entity';
 export { Payment } from './payment.entity';

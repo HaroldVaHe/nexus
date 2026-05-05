@@ -7,10 +7,11 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { User } from '../../database/entities/user.entity';
+import { UserRole } from '../../database/entities/user-role.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, UserRole]),
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'nexus-secret-key-change-in-production',

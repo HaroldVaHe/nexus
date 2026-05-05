@@ -87,7 +87,6 @@ const MOCK_RESULTS = [
 
 export default function SearchScreen() {
   const router = useRouter();
-  const { user } = useAuth();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('Universidad de La Sabana');
   const [date, setDate] = useState('Hoy');
