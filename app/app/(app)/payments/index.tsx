@@ -13,6 +13,7 @@ import {
 import { useRouter, Link } from 'expo-router';
 import { colors, borderRadius, typography, spacing, shadow } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/context/AuthContext';
 
 const MOCK_CARDS = [
   {
@@ -60,13 +61,17 @@ export default function PaymentsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Métodos de Pago</Text>
-        <TouchableOpacity onPress={() => router.push('/(app)/payments/add-card')}>
-          <Ionicons name="add" size={24} color={colors.primary.contrast} />
-        </TouchableOpacity>
+        <View style={styles.headerLeft}>
+          <View style={styles.avatarSmall}>
+            <Text style={styles.headerAvatarText}>{user?.full_name?.charAt(0) || 'U'}</Text>
+          </View>
+          <Text style={styles.headerBrand}>NEXUS</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={() => router.push('/(app)/payments/add-card')}>
+            <Ionicons name="add" size={24} color={colors.primary.contrast} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.coinsBanner}>
@@ -221,18 +226,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: colors.primary.default,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
-  backButton: {
-    padding: spacing.xs,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
-  headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  headerBrand: {
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
     color: colors.primary.contrast,
-    fontFamily: typography.family.semibold,
+    fontFamily: typography.family.bold,
+    letterSpacing: 2,
+  },
+  avatarSmall: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.secondary.default,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerAvatarText: {
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+    color: colors.primary.contrast,
+    fontFamily: typography.family.bold,
   },
   coinsBanner: {
     flexDirection: 'row',

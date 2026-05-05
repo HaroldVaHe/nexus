@@ -13,13 +13,17 @@ import {
 import { useRouter, Link } from 'expo-router';
 import { colors, borderRadius, typography, spacing, shadow } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { user } = useAuth();
 
-  const user = {
-    name: 'Estudiante Unisabana',
-    email: 'estudiante@unisabana.edu.co',
+  const displayName = user?.full_name?.split(' ')[0] || 'Usuario';
+
+  const mockUser = {
+    name: user?.full_name || 'Estudiante Unisabana',
+    email: user?.email || 'estudiante@unisabana.edu.co',
     faculty: 'Ingeniería',
     phone: '+57 300 123 4567',
     rating: 4.8,
@@ -31,37 +35,44 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mi Perfil</Text>
-        <Link href="/(app)/settings" asChild>
-          <TouchableOpacity style={styles.settingsButton}>
-            <Ionicons name="settings-outline" size={22} color={colors.primary.contrast} />
+        <View style={styles.headerLeft}>
+          <View style={styles.avatarSmall}>
+            <Text style={styles.avatarText}>{mockUser.name.charAt(0)}</Text>
+          </View>
+          <Text style={styles.headerBrand}>NEXUS</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.headerIconBtn}>
+            <Ionicons name="notifications-outline" size={24} color={colors.primary.contrast} />
+            <View style={styles.badge} />
           </TouchableOpacity>
-        </Link>
+        </View>
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.profileSection}>
+          <Text style={styles.greeting}>Hola, {displayName}!</Text>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user.name.charAt(0)}</Text>
+            <Text style={styles.avatarTextLarge}>{mockUser.name.charAt(0)}</Text>
           </View>
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userFaculty}>{user.faculty}</Text>
+          <Text style={styles.userName}>{mockUser.name}</Text>
+          <Text style={styles.userFaculty}>{mockUser.faculty}</Text>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Ionicons name="star" size={18} color="#F59E0B" />
-              <Text style={styles.statValue}>{user.rating}</Text>
+              <Text style={styles.statValue}>{mockUser.rating}</Text>
               <Text style={styles.statLabel}>Rating</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Ionicons name="car-sport-outline" size={18} color={colors.secondary.default} />
-              <Text style={styles.statValue}>{user.trips}</Text>
+              <Text style={styles.statValue}>{mockUser.trips}</Text>
               <Text style={styles.statLabel}>Viajes</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Ionicons name="trophy-outline" size={18} color="#F59E0B" />
-              <Text style={styles.statValue}>{user.sabana_coins}</Text>
+              <Text style={styles.statValue}>{mockUser.sabana_coins}</Text>
               <Text style={styles.statLabel}>Coins</Text>
             </View>
           </View>
@@ -73,25 +84,25 @@ export default function ProfileScreen() {
             <View style={styles.infoRow}>
               <Ionicons name="mail-outline" size={20} color={colors.secondary.default} />
               <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{user.email}</Text>
+              <Text style={styles.infoValue}>{mockUser.email}</Text>
             </View>
             <View style={styles.infoDivider} />
             <View style={styles.infoRow}>
               <Ionicons name="call-outline" size={20} color={colors.secondary.default} />
               <Text style={styles.infoLabel}>Teléfono</Text>
-              <Text style={styles.infoValue}>{user.phone}</Text>
+              <Text style={styles.infoValue}>{mockUser.phone}</Text>
             </View>
             <View style={styles.infoDivider} />
             <View style={styles.infoRow}>
               <Ionicons name="business-outline" size={20} color={colors.secondary.default} />
               <Text style={styles.infoLabel}>Facultad</Text>
-              <Text style={styles.infoValue}>{user.faculty}</Text>
+              <Text style={styles.infoValue}>{mockUser.faculty}</Text>
             </View>
             <View style={styles.infoDivider} />
             <View style={styles.infoRow}>
               <Ionicons name="calendar-outline" size={20} color={colors.secondary.default} />
               <Text style={styles.infoLabel}>Miembro desde</Text>
-              <Text style={styles.infoValue}>{user.member_since}</Text>
+              <Text style={styles.infoValue}>{mockUser.member_since}</Text>
             </View>
           </View>
         </View>
@@ -138,6 +149,16 @@ export default function ProfileScreen() {
                 <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
               </TouchableOpacity>
             </Link>
+            <View style={styles.optionDivider} />
+            <Link href="/(app)/settings" asChild>
+              <TouchableOpacity style={styles.optionRow}>
+                <View style={styles.optionLeft}>
+                  <Ionicons name="settings-outline" size={20} color={colors.secondary.default} />
+                  <Text style={styles.optionText}>Configuración</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+              </TouchableOpacity>
+            </Link>
           </View>
         </View>
 
@@ -163,16 +184,57 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.lg,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
   },
-  headerTitle: {
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  headerBrand: {
     fontSize: typography.sizes.xxl,
     fontWeight: typography.weights.bold,
     color: colors.primary.contrast,
     fontFamily: typography.family.bold,
+    letterSpacing: 2,
   },
-  settingsButton: {
+  avatarSmall: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.secondary.default,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+    color: colors.primary.contrast,
+    fontFamily: typography.family.bold,
+  },
+  avatarTextLarge: {
+    fontSize: typography.sizes.xxxl,
+    fontWeight: typography.weights.bold,
+    color: colors.primary.contrast,
+    fontFamily: typography.family.bold,
+  },
+  headerIconBtn: {
     padding: spacing.sm,
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.status.error,
   },
   content: {
     flex: 1,
@@ -183,21 +245,22 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
     marginBottom: spacing.md,
   },
+  greeting: {
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.semibold,
+    color: colors.text.primary,
+    fontFamily: typography.family.semibold,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
   avatar: {
-    width: 80,
-    height: 80,
+    width: 90,
+    height: 90,
     borderRadius: borderRadius.full,
     backgroundColor: colors.secondary.default,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.lg,
     marginBottom: spacing.md,
-  },
-  avatarText: {
-    fontSize: typography.sizes.xxxl,
-    fontWeight: typography.weights.bold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.bold,
   },
   userName: {
     fontSize: typography.sizes.xl,

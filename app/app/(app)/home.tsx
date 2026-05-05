@@ -179,7 +179,7 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Image source={require('@/assets/icon.png')} style={styles.avatar} />
+          <Image source={require('../../assets/icon.png')} style={styles.avatar} />
           <View style={styles.branding}>
             <Text style={styles.brandText}>NEXUS</Text>
           </View>

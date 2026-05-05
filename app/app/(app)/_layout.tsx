@@ -44,7 +44,7 @@ export default function AppLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: 'Find',
+          title: 'Buscar',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
@@ -56,15 +56,6 @@ export default function AppLayout() {
           title: 'Publicar',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="add-circle" size={size + 8} color={colors.tertiary.default} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="bookings"
-        options={{
-          title: 'Mis Viajes',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="car-outline" size={size} color={color} />
           ),
         }}
       />
