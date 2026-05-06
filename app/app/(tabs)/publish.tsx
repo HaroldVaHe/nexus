@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,48 +8,199 @@ import {
   SafeAreaView,
   TextInput,
   Alert,
-  Switch,
+  Dimensions,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { borderRadius, spacing, shadow } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import TabHeader from '@/components/TabHeader';
+import MapPickerModal from '@/components/MapPickerModal';
 import { useSettings } from '@/context/SettingsContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/context/AuthContext';
+import { tripsApi } from '@/api/trips';
+
+const { width } = Dimensions.get('window');
 
 export default function PublishTripScreen() {
   const router = useRouter();
   const { t } = useSettings();
   const { colors, typography } = useTheme();
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
-  const [originDetail, setOriginDetail] = useState('');
-  const [destinationDetail, setDestinationDetail] = useState('');
+  const { token } = useAuth();
+
+  const [originName, setOriginName] = useState('');
+  const [destinationName, setDestinationName] = useState('');
+  const [originLat, setOriginLat] = useState<number | null>(null);
+  const [originLng, setOriginLng] = useState<number | null>(null);
+  const [destinationLat, setDestinationLat] = useState<number | null>(null);
+  const [destinationLng, setDestinationLng] = useState<number | null>(null);
   const [date, setDate] = useState('');
   const [departureTime, setDepartureTime] = useState('');
-  const [totalSeats, setTotalSeats] = useState('3');
+  const [totalSeats, setTotalSeats] = useState(4);
   const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
-  const [allowLuggage, setAllowLuggage] = useState(false);
-  const [allowPets, setAllowPets] = useState(false);
-  const [acceptSabanaCoins, setAcceptSabanaCoins] = useState(true);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [mapMode, setMapMode] = useState<'origin' | 'destination'>('origin');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<Date | null>(null);
 
-  const handlePublish = () => {
-    if (!origin || !destination || !date || !departureTime || !price) {
+  const openMapModal = useCallback((mode: 'origin' | 'destination') => {
+    setMapMode(mode);
+    setShowMapModal(true);
+  }, []);
+
+  const handleMapConfirm = useCallback(async (lat: number, lng: number, name: string) => {
+    setShowMapModal(false);
+
+    try {
+      const response = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+      const address = response.length > 0
+        ? [response[0].street, response[0].city, response[0].region].filter(Boolean).join(', ')
+        : name;
+
+      if (mapMode === 'origin') {
+        setOriginName(address);
+        setOriginLat(lat);
+        setOriginLng(lng);
+      } else {
+        setDestinationName(address);
+        setDestinationLat(lat);
+        setDestinationLng(lng);
+      }
+    } catch {
+      if (mapMode === 'origin') {
+        setOriginName(name);
+        setOriginLat(lat);
+        setOriginLng(lng);
+      } else {
+        setDestinationName(name);
+        setDestinationLat(lat);
+        setDestinationLng(lng);
+      }
+    }
+  }, [mapMode]);
+
+  const useMyLocation = useCallback(async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permiso requerido', 'Necesitamos acceso a tu ubicacion para usar esta funcion.');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      const response = await Location.reverseGeocodeAsync({ latitude, longitude });
+      const name = response.length > 0
+        ? [response[0].street, response[0].city].filter(Boolean).join(', ')
+        : 'Mi ubicacion';
+
+      setOriginName(name);
+      setOriginLat(latitude);
+      setOriginLng(longitude);
+    } catch {
+      Alert.alert('Error', 'No se pudo obtener tu ubicacion actual.');
+    }
+  }, []);
+
+  const formatDate = (d: Date): string => {
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatTime = (d: Date): string => {
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  const handleDateChange = (_event: any, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (date) {
+      setSelectedDate(date);
+      setDate(formatDate(date));
+    }
+  };
+
+  const handleTimeChange = (_event: any, time?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
+    if (time) {
+      setSelectedTime(time);
+      setDepartureTime(formatTime(time));
+    }
+  };
+
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const handlePublish = async () => {
+    if (!originName || !destinationName || !date || !departureTime || !price || originLat === null || destinationLat === null) {
       Alert.alert('Error', t.publish.fillRequired);
+      return;
+    }
+
+    const priceNum = parseInt(price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      Alert.alert('Error', 'Ingresa un precio valido');
+      return;
+    }
+
+    const [day, month, year] = date.split('/').map(Number);
+    const [hours, minutes] = departureTime.split(':').map(Number);
+    const departureDate = new Date(year, month - 1, day, hours, minutes);
+    if (isNaN(departureDate.getTime()) || departureDate <= new Date()) {
+      Alert.alert('Error', 'Selecciona una fecha y hora valida');
+      return;
+    }
+
+    if (!token) {
+      Alert.alert('Error', 'Debes iniciar sesion para publicar un viaje');
       return;
     }
 
     Alert.alert(
       t.publish.publishConfirm,
-      t.publish.publishConfirmMsg.replace('${price}', `$${parseInt(price).toLocaleString('es-CO')}`),
+      t.publish.publishConfirmMsg.replace('${price}', `$${priceNum.toLocaleString('es-CO')}`),
       [
         { text: t.common.cancel, style: 'cancel' },
         {
           text: t.common.confirm,
-          onPress: () => {
-            Alert.alert(t.common.success, t.publish.publishSuccess);
-            router.replace('/(tabs)/home');
+          onPress: async () => {
+            setIsPublishing(true);
+            try {
+              await tripsApi.createTrip(token, {
+                origin_name: originName,
+                origin_lat: originLat,
+                origin_lng: originLng!,
+                destination_name: destinationName,
+                destination_lat: destinationLat,
+                destination_lng: destinationLng!,
+                departure_time: departureDate.toISOString(),
+                total_seats: totalSeats,
+                price: priceNum,
+                notes: notes || undefined,
+              });
+
+              Alert.alert(t.common.success, t.publish.publishSuccess, [
+                { text: 'OK', onPress: () => router.replace('/(tabs)/home') },
+              ]);
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'No se pudo publicar el viaje');
+            } finally {
+              setIsPublishing(false);
+            }
           },
         },
       ]
@@ -79,72 +230,74 @@ export default function PublishTripScreen() {
     </View>
   );
 
-  const seats = parseInt(totalSeats) || 1;
+  const LocationPicker = ({ mode, name, color }: { mode: 'origin' | 'destination'; name: string; color: string }) => {
+    const hasLocation = name.length > 0;
+
+    return (
+      <View style={styles.locationPicker}>
+        <TouchableOpacity
+          style={[
+            styles.locationButton,
+            { backgroundColor: colors.background.card, borderColor: colors.border.default, borderWidth: 1 },
+          ]}
+          onPress={() => openMapModal(mode)}
+        >
+          <Ionicons name={mode === 'origin' ? 'location' : 'flag'} size={20} color={color} />
+          <Text
+            style={[
+              styles.locationButtonText,
+              { color: hasLocation ? colors.text.primary : colors.text.muted, fontSize: typography.sizes.md, fontFamily: typography.family.regular },
+            ]}
+            numberOfLines={1}
+          >
+            {name || 'Toca para seleccionar en mapa'}
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.text.muted} />
+        </TouchableOpacity>
+        {mode === 'origin' && hasLocation && (
+          <TouchableOpacity style={styles.useMyLocBtn} onPress={useMyLocation}>
+            <Ionicons name="locate" size={16} color={colors.secondary.default} />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
       <TabHeader />
 
+      <MapPickerModal
+        visible={showMapModal}
+        mode={mapMode}
+        onConfirm={handleMapConfirm}
+        onCancel={() => setShowMapModal(false)}
+      />
+
       <ScrollView style={styles.content}>
         <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
           <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.route}</Text>
-          <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm, borderColor: colors.border.default }]}>
-            <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.origin}</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
-              <Ionicons name="location-outline" size={20} color={colors.tertiary.default} />
-              <TextInput
-                style={[styles.input, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
-                placeholder={t.publish.originPlaceholder}
-                placeholderTextColor={colors.text.muted}
-                value={origin}
-                onChangeText={setOrigin}
-              />
-            </View>
 
-            <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.originDetail}</Text>
-            <TextInput
-              style={[styles.input, styles.textInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
-              placeholder={t.publish.originDetailPlaceholder}
-              placeholderTextColor={colors.text.muted}
-              value={originDetail}
-              onChangeText={setOriginDetail}
-              multiline
-            />
-
-            <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.destination}</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
-              <Ionicons name="flag-outline" size={20} color={colors.secondary.default} />
-              <TextInput
-                style={[styles.input, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
-                placeholder={t.publish.destinationPlaceholder}
-                placeholderTextColor={colors.text.muted}
-                value={destination}
-                onChangeText={setDestination}
-              />
-            </View>
-
-            <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.destinationDetail}</Text>
-            <TextInput
-              style={[styles.input, styles.textInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
-              placeholder={t.publish.destinationDetailPlaceholder}
-              placeholderTextColor={colors.text.muted}
-              value={destinationDetail}
-              onChangeText={setDestinationDetail}
-              multiline
-            />
-          </View>
+          <LocationPicker mode="origin" name={originName} color={colors.tertiary.default} />
+          <LocationPicker mode="destination" name={destinationName} color={colors.secondary.default} />
         </View>
 
         <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
           <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.dateTime}</Text>
           <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm, borderColor: colors.border.default }]}>
-            <TouchableOpacity style={[styles.dateButton, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
+            <TouchableOpacity
+              style={[styles.dateButton, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}
+              onPress={() => setShowDatePicker(true)}
+            >
               <Ionicons name="calendar-outline" size={20} color={colors.secondary.default} />
               <Text style={[styles.dateText, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.medium }, !date && { color: colors.text.muted }]}>
                 {date || t.publish.selectDate}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.dateButton, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
+            <TouchableOpacity
+              style={[styles.dateButton, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}
+              onPress={() => setShowTimePicker(true)}
+            >
               <Ionicons name="time-outline" size={20} color={colors.secondary.default} />
               <Text style={[styles.dateText, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.medium }, !departureTime && { color: colors.text.muted }]}>
                 {departureTime || t.publish.departureTime}
@@ -153,15 +306,33 @@ export default function PublishTripScreen() {
           </View>
         </View>
 
+        {showDatePicker && (
+          <DateTimePicker
+            value={selectedDate || new Date()}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleDateChange}
+            minimumDate={new Date()}
+          />
+        )}
+        {showTimePicker && (
+          <DateTimePicker
+            value={selectedTime || new Date()}
+            mode="time"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleTimeChange}
+          />
+        )}
+
         <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
           <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.seatsPrice}</Text>
           <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm, borderColor: colors.border.default }]}>
             <NumberSelector
-              value={seats}
+              value={totalSeats}
               label={t.publish.seatCount}
-              onIncrement={() => setTotalSeats(String(seats + 1))}
-              onDecrement={() => setTotalSeats(String(seats - 1))}
-              max={7}
+              onIncrement={() => setTotalSeats(prev => prev + 1)}
+              onDecrement={() => setTotalSeats(prev => Math.max(1, prev - 1))}
+              max={4}
             />
             <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.pricePerPerson}</Text>
             <View style={[styles.inputWrapper, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
@@ -179,59 +350,9 @@ export default function PublishTripScreen() {
         </View>
 
         <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.preferences}</Text>
-          <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm, borderColor: colors.border.default }]}>
-            <View style={styles.preferenceRow}>
-              <View style={styles.preferenceInfo}>
-                <Ionicons name="briefcase-outline" size={22} color={colors.text.secondary} />
-                <View style={styles.preferenceText}>
-                  <Text style={[styles.preferenceLabel, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>{t.publish.allowLuggage}</Text>
-                  <Text style={[styles.preferenceSubtext, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.publish.luggageSub}</Text>
-                </View>
-              </View>
-              <Switch
-                value={allowLuggage}
-                onValueChange={setAllowLuggage}
-                trackColor={{ false: colors.border.default, true: colors.tertiary.default }}
-              />
-            </View>
-            <View style={[styles.preferenceDivider, { backgroundColor: colors.border.default }]} />
-            <View style={styles.preferenceRow}>
-              <View style={styles.preferenceInfo}>
-                <Ionicons name="paw-outline" size={22} color={colors.text.secondary} />
-                <View style={styles.preferenceText}>
-                  <Text style={[styles.preferenceLabel, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>{t.publish.allowPets}</Text>
-                  <Text style={[styles.preferenceSubtext, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.publish.petsSub}</Text>
-                </View>
-              </View>
-              <Switch
-                value={allowPets}
-                onValueChange={setAllowPets}
-                trackColor={{ false: colors.border.default, true: colors.tertiary.default }}
-              />
-            </View>
-            <View style={[styles.preferenceDivider, { backgroundColor: colors.border.default }]} />
-            <View style={styles.preferenceRow}>
-              <View style={styles.preferenceInfo}>
-                <Ionicons name="logo-bitcoin" size={22} color={colors.text.secondary} />
-                <View style={styles.preferenceText}>
-                  <Text style={[styles.preferenceLabel, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>{t.publish.acceptSabanaCoins}</Text>
-                  <Text style={[styles.preferenceSubtext, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.publish.sabanaCoinsSub}</Text>
-                </View>
-              </View>
-              <Switch
-                value={acceptSabanaCoins}
-                onValueChange={setAcceptSabanaCoins}
-                trackColor={{ false: colors.border.default, true: colors.tertiary.default }}
-              />
-            </View>
-          </View>
-        </View>
-
-        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
           <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.additionalNotes}</Text>
           <TextInput
-            style={[styles.input, styles.textInput, styles.notesInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
+            style={[styles.textInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
             placeholder={t.publish.notesPlaceholder}
             placeholderTextColor={colors.text.muted}
             value={notes}
@@ -242,9 +363,19 @@ export default function PublishTripScreen() {
         </View>
 
         <View style={[styles.publishSection, { paddingHorizontal: spacing.lg }]}>
-          <TouchableOpacity style={[styles.publishButton, { backgroundColor: colors.tertiary.default, ...shadow.md }]} onPress={handlePublish}>
-            <Ionicons name="send-outline" size={20} color={colors.primary.contrast} />
-            <Text style={[styles.publishButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.publishTrip}</Text>
+          <TouchableOpacity
+            style={[styles.publishButton, { backgroundColor: isPublishing ? colors.border.default : colors.tertiary.default, ...shadow.md }]}
+            onPress={handlePublish}
+            disabled={isPublishing}
+          >
+            {isPublishing ? (
+              <ActivityIndicator size="small" color={colors.primary.contrast} />
+            ) : (
+              <>
+                <Ionicons name="send-outline" size={20} color={colors.primary.contrast} />
+                <Text style={[styles.publishButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.publishTrip}</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
         <View style={{ height: spacing.xxl }} />
@@ -258,13 +389,16 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   section: { marginBottom: spacing.md },
   sectionTitle: { marginBottom: spacing.sm },
+  locationPicker: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
+  locationButton: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: borderRadius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
+  locationButtonText: { flex: 1, marginLeft: spacing.sm },
+  useMyLocBtn: { padding: spacing.sm, marginLeft: spacing.xs },
   card: { borderRadius: borderRadius.lg, padding: spacing.md, borderWidth: 1 },
   inputLabel: { marginBottom: spacing.sm, marginTop: spacing.sm },
   inputWrapper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: borderRadius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, marginBottom: spacing.sm },
   currencySymbol: { marginRight: spacing.xs },
   input: { flex: 1, paddingVertical: spacing.md },
-  textInput: { minHeight: 80, paddingTop: spacing.md },
-  notesInput: { minHeight: 100 },
+  textInput: { minHeight: 60, paddingTop: spacing.md, borderWidth: 1, borderRadius: borderRadius.md, paddingHorizontal: spacing.md, marginBottom: spacing.sm },
   dateButton: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: borderRadius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, marginBottom: spacing.sm },
   dateText: { marginLeft: spacing.sm },
   numberSelector: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
@@ -273,12 +407,6 @@ const styles = StyleSheet.create({
   selectorBtn: { width: 40, height: 40, borderRadius: borderRadius.full, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
   selectorBtnDisabled: { opacity: 0.4 },
   selectorValue: { marginHorizontal: spacing.lg },
-  preferenceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.sm },
-  preferenceInfo: { flexDirection: 'row', alignItems: 'center' },
-  preferenceText: { marginLeft: spacing.md },
-  preferenceLabel: {},
-  preferenceSubtext: {},
-  preferenceDivider: { height: 1 },
   publishSection: { paddingTop: spacing.md },
   publishButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: borderRadius.md, paddingVertical: spacing.md },
   publishButtonText: { marginLeft: spacing.sm },

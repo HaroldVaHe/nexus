@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,32 +9,67 @@ import {
   StatusBar,
   FlatList,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import TabHeader from '@/components/TabHeader';
 import { useSettings } from '@/context/SettingsContext';
+import { useAuth } from '@/context/AuthContext';
 import { borderRadius, spacing, shadow, colors } from '@/theme/colors';
+import { tripsApi } from '@/api/trips';
 
 const { width } = Dimensions.get('window');
 
-const MOCK_FREQUENT_ROUTES = [
+interface Trip {
+  id: string;
+  driver: {
+    id: string;
+    full_name: string;
+    faculty?: string;
+    average_rating?: number;
+  };
+  origin_name: string;
+  destination_name: string;
+  departure_time: string;
+  available_seats: number;
+  total_seats: number;
+  price: number;
+  status: string;
+  notes?: string;
+}
+
+const FREQUENT_ROUTES = [
   { id: '1', name: 'Puente Madera', time: '7:00 AM', days: 'Lunes y Viernes', destination: 'Universidad de La Sabana' },
   { id: '2', name: 'Portal Norte', time: '7:30 AM', days: 'Lunes a Viernes', destination: 'Universidad de La Sabana' },
   { id: '3', name: 'Chicó Norte', time: '6:45 AM', days: 'Martes y Jueves', destination: 'Universidad de La Sabana' },
-];
-
-const MOCK_AVAILABLE_TRIPS = [
-  { id: '1', driver_name: 'Carlos Martínez', driver_faculty: 'Ingeniería', driver_rating: 4.8, origin: 'Centro Comercial Fontanar', destination: 'Universidad de La Sabana', departure_time: '7:00 AM', arrival_time: '7:45 AM', available_seats: 3, price: 8000 },
-  { id: '2', driver_name: 'María López', driver_faculty: 'Medicina', driver_rating: 4.9, origin: 'Estación Calle 100', destination: 'Universidad de La Sabana', departure_time: '7:30 AM', arrival_time: '8:15 AM', available_seats: 2, price: 6500 },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useSettings();
   const { colors, typography, spacing: themeSpacing } = useTheme();
-  const [searchText, setSearchText] = useState('');
+  const { token, user } = useAuth();
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loadingTrips, setLoadingTrips] = useState(false);
+
+  useEffect(() => {
+    loadTrips();
+  }, []);
+
+  const loadTrips = async () => {
+    if (!token) return;
+    setLoadingTrips(true);
+    try {
+      const data = await tripsApi.searchTrips(token);
+      setTrips(data || []);
+    } catch {
+      setTrips([]);
+    } finally {
+      setLoadingTrips(false);
+    }
+  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -46,7 +81,15 @@ export default function HomeScreen() {
   const h = t.home;
   const c = t.common;
 
-  const renderFrequentRoute = ({ item }: { item: typeof MOCK_FREQUENT_ROUTES[0] }) => (
+  const formatTime = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const renderFrequentRoute = ({ item }: { item: typeof FREQUENT_ROUTES[0] }) => (
     <TouchableOpacity style={[styles.routeCard, { backgroundColor: colors.background.card, ...shadow.sm }]}>
       <View style={styles.routeIcon}>
         <Ionicons name="car-outline" size={20} color={colors.secondary.default} />
@@ -62,45 +105,45 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
-  const renderTripCard = ({ item }: { item: typeof MOCK_AVAILABLE_TRIPS[0] }) => (
+  const renderTripCard = ({ item }: { item: Trip }) => (
     <Link href={`/trip/${item.id}`} asChild>
       <TouchableOpacity style={[styles.tripCard, { backgroundColor: colors.background.card, ...shadow.sm }]}>
         <View style={styles.cardHeader}>
           <View style={styles.driverInfo}>
             <View style={[styles.driverAvatar, { backgroundColor: colors.secondary.default }]}>
-              <Text style={[styles.avatarText, { color: colors.primary.contrast, fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{item.driver_name.charAt(0)}</Text>
+              <Text style={[styles.avatarText, { color: colors.primary.contrast, fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{item.driver?.full_name?.charAt(0) || '?'}</Text>
             </View>
             <View>
-               <Text style={[styles.driverName, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{item.driver_name}</Text>
-               <Text style={[styles.driverFaculty, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.driver_faculty}</Text>
+               <Text style={[styles.driverName, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{item.driver?.full_name || 'Desconocido'}</Text>
+               <Text style={[styles.driverFaculty, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.driver?.faculty || '-'}</Text>
             </View>
           </View>
           <View style={[styles.ratingBadge, { backgroundColor: '#FEF3C7' }]}>
             <Ionicons name="star" size={10} color="#F59E0B" />
-             <Text style={[styles.ratingText, { color: '#92400E', fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{item.driver_rating}</Text>
+             <Text style={[styles.ratingText, { color: '#92400E', fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{item.driver?.average_rating?.toFixed(1) || '0.0'}</Text>
           </View>
         </View>
         <View style={styles.routeContainer}>
           <View style={styles.routePoint}>
             <Ionicons name="location" size={14} color={colors.tertiary.default} />
-             <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.origin}</Text>
+             <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.origin_name}</Text>
           </View>
           <View style={[styles.routeLine, { backgroundColor: colors.border.default }]} />
           <View style={styles.routePoint}>
             <Ionicons name="flag" size={14} color={colors.secondary.default} />
-             <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.destination}</Text>
+             <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.destination_name}</Text>
           </View>
         </View>
         <View style={styles.cardFooter}>
           <View style={styles.tripDetails}>
             <Ionicons name="time-outline" size={14} color={colors.text.muted} />
-             <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.departure_time}</Text>
+             <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{formatTime(item.departure_time)}</Text>
           </View>
           <View style={styles.tripDetails}>
             <Ionicons name="people-outline" size={14} color={colors.text.muted} />
              <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.available_seats} {c.seats}</Text>
           </View>
-           <Text style={[styles.priceText, { color: colors.tertiary.default, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>${item.price.toLocaleString('es-CO')}</Text>
+           <Text style={[styles.priceText, { color: colors.tertiary.default, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>${Number(item.price).toLocaleString('es-CO')}</Text>
         </View>
       </TouchableOpacity>
     </Link>
@@ -113,13 +156,15 @@ export default function HomeScreen() {
     { title: h.myPublications, icon: 'document-text', color: colors.secondary.default, bg: colors.secondary.default + '20', href: '/bookings' },
   ];
 
+  const displayName = user?.full_name?.split(' ')[0] || 'Carlos';
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary.default} />
 
       <TabHeader />
       <View style={[styles.greetingSection, { backgroundColor: colors.primary.default, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }]}>
-        <Text style={{ color: colors.primary.contrast, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }}>{getGreeting()}, Carlos</Text>
+        <Text style={{ color: colors.primary.contrast, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }}>{getGreeting()}, {displayName}</Text>
         <Text style={{ color: colors.primary.contrast + 'AA', fontSize: typography.sizes.md, fontFamily: typography.family.regular }}>{h.subGreeting}</Text>
       </View>
 
@@ -161,7 +206,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
           <FlatList
-            data={MOCK_FREQUENT_ROUTES}
+            data={FREQUENT_ROUTES}
             renderItem={renderFrequentRoute}
             keyExtractor={(item) => item.id}
             horizontal
@@ -177,13 +222,26 @@ export default function HomeScreen() {
               <Text style={[styles.seeAll, { color: colors.secondary.default, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{h.seeAll}</Text>
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={MOCK_AVAILABLE_TRIPS}
-            renderItem={renderTripCard}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-          />
+          {loadingTrips ? (
+            <View style={{ alignItems: 'center', paddingVertical: spacing.xl }}>
+              <ActivityIndicator size="large" color={colors.secondary.default} />
+              <Text style={{ color: colors.text.muted, fontSize: typography.sizes.md, fontFamily: typography.family.regular, marginTop: spacing.sm }}>Cargando viajes...</Text>
+            </View>
+          ) : trips.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: spacing.xl }}>
+              <Ionicons name="car-outline" size={48} color={colors.text.muted} />
+              <Text style={{ color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, marginTop: spacing.sm }}>No hay viajes disponibles</Text>
+              <Text style={{ color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular, marginTop: spacing.xs }}>Sé el primero en publicar un viaje</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={trips.slice(0, 5)}
+              renderItem={renderTripCard}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+            />
+          )}
         </View>
 
         <View style={{ height: themeSpacing.xxl }} />

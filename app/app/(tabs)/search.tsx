@@ -8,7 +8,7 @@ import {
   SafeAreaView,
   TextInput,
   FlatList,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { borderRadius, spacing, shadow } from '@/theme/colors';
@@ -16,82 +16,119 @@ import { Ionicons } from '@expo/vector-icons';
 import TabHeader from '@/components/TabHeader';
 import { useSettings } from '@/context/SettingsContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/context/AuthContext';
+import { tripsApi } from '@/api/trips';
 
-const MOCK_RESULTS = [
-  { id: '1', driver_name: 'Carlos Martínez', driver_faculty: 'Ingeniería', driver_rating: 4.8, origin: 'Centro Comercial Fontanar', destination: 'Universidad de La Sabana', departure_time: '7:00 AM', arrival_time: '7:45 AM', available_seats: 3, total_seats: 4, price: 8000 },
-  { id: '2', driver_name: 'María López', driver_faculty: 'Medicina', driver_rating: 4.9, origin: 'Estación Calle 100', destination: 'Universidad de La Sabana', departure_time: '7:30 AM', arrival_time: '8:15 AM', available_seats: 2, total_seats: 4, price: 6500 },
-  { id: '3', driver_name: 'Andrés Rodríguez', driver_faculty: 'Economía', driver_rating: 4.5, origin: 'Portal Norte', destination: 'Universidad de La Sabana', departure_time: '8:00 AM', arrival_time: '8:40 AM', available_seats: 1, total_seats: 4, price: 5000 },
-  { id: '4', driver_name: 'Laura Gómez', driver_faculty: 'Comunicación', driver_rating: 4.7, origin: 'Chicó Norte', destination: 'Universidad de La Sabana', departure_time: '6:45 AM', arrival_time: '7:30 AM', available_seats: 2, total_seats: 3, price: 7000 },
-  { id: '5', driver_name: 'Diego Herrera', driver_faculty: 'Derecho', driver_rating: 4.6, origin: 'Usaquén', destination: 'Universidad de La Sabana', departure_time: '7:15 AM', arrival_time: '8:00 AM', available_seats: 3, total_seats: 4, price: 7500 },
-];
+interface Trip {
+  id: string;
+  driver: {
+    id: string;
+    full_name: string;
+    faculty?: string;
+    average_rating?: number;
+  };
+  origin_name: string;
+  destination_name: string;
+  departure_time: string;
+  available_seats: number;
+  total_seats: number;
+  price: number;
+  status: string;
+  notes?: string;
+}
 
 export default function SearchScreen() {
   const router = useRouter();
   const { t } = useSettings();
   const { colors, typography } = useTheme();
+  const { token } = useAuth();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('Universidad de La Sabana');
-  const [date, setDate] = useState(t.common.today);
-  const [results, setResults] = useState<typeof MOCK_RESULTS>([]);
+  const [results, setResults] = useState<Trip[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const s = t.search;
   const c = t.common;
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
+    if (!token) {
+      return;
+    }
+
+    setIsSearching(true);
     setHasSearched(true);
-    if (origin.trim() || destination.trim()) {
-      setResults(MOCK_RESULTS);
-    } else {
+
+    try {
+      const data = await tripsApi.searchTrips(token, {
+        origin: origin.trim() || undefined,
+        destination: destination.trim() || undefined,
+      });
+      setResults(data || []);
+    } catch (error) {
       setResults([]);
+    } finally {
+      setIsSearching(false);
     }
   };
 
-  const renderTripCard = ({ item }: { item: typeof MOCK_RESULTS[0] }) => (
-    <TouchableOpacity style={[styles.tripCard, { backgroundColor: colors.background.card, ...shadow.md }]} onPress={() => router.push(`/trip/${item.id}`)}>
-      <View style={styles.cardHeader}>
-        <View style={styles.driverInfo}>
-          <View style={[styles.driverAvatar, { backgroundColor: colors.secondary.default }]}>
-            <Text style={[styles.avatarText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{item.driver_name.charAt(0)}</Text>
+  const formatTime = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const renderTripCard = ({ item }: { item: Trip }) => (
+    <Link href={`/trip/${item.id}`} asChild>
+      <TouchableOpacity style={[styles.tripCard, { backgroundColor: colors.background.card, ...shadow.md }]}>
+        <View style={styles.cardHeader}>
+          <View style={styles.driverInfo}>
+            <View style={[styles.driverAvatar, { backgroundColor: colors.secondary.default }]}>
+              <Text style={[styles.avatarText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{item.driver?.full_name?.charAt(0) || '?'}</Text>
+            </View>
+            <View>
+              <Text style={[styles.driverName, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{item.driver?.full_name || 'Desconocido'}</Text>
+              <Text style={[styles.driverFaculty, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.driver?.faculty || '-'}</Text>
+            </View>
           </View>
-          <View>
-            <Text style={[styles.driverName, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{item.driver_name}</Text>
-            <Text style={[styles.driverFaculty, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.driver_faculty}</Text>
+          <View style={[styles.ratingBadge, { backgroundColor: '#FEF3C7' }]}>
+            <Ionicons name="star" size={12} color="#F59E0B" />
+            <Text style={[styles.ratingText, { color: '#92400E', fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>
+              {item.driver?.average_rating?.toFixed(1) || '0.0'}
+            </Text>
           </View>
         </View>
-        <View style={[styles.ratingBadge, { backgroundColor: '#FEF3C7' }]}>
-          <Ionicons name="star" size={12} color="#F59E0B" />
-          <Text style={[styles.ratingText, { color: '#92400E', fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{item.driver_rating}</Text>
+        <View style={styles.routeContainer}>
+          <View style={styles.routePoint}>
+            <Ionicons name="location" size={16} color={colors.tertiary.default} />
+            <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.origin_name}</Text>
+          </View>
+          <View style={[styles.routeLine, { backgroundColor: colors.border.default }]} />
+          <View style={styles.routePoint}>
+            <Ionicons name="flag" size={16} color={colors.secondary.default} />
+            <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.destination_name}</Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.routeContainer}>
-        <View style={styles.routePoint}>
-          <Ionicons name="location" size={16} color={colors.tertiary.default} />
-          <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.origin}</Text>
+        <View style={styles.cardFooter}>
+          <View style={styles.tripDetails}>
+            <Ionicons name="time-outline" size={14} color={colors.text.muted} />
+            <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{formatTime(item.departure_time)}</Text>
+          </View>
+          <View style={styles.tripDetails}>
+            <Ionicons name="people-outline" size={14} color={colors.text.muted} />
+            <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.available_seats} {c.seats}</Text>
+          </View>
         </View>
-        <View style={[styles.routeLine, { backgroundColor: colors.border.default }]} />
-        <View style={styles.routePoint}>
-          <Ionicons name="flag" size={16} color={colors.secondary.default} />
-          <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.destination}</Text>
+        <View style={styles.cardBottom}>
+          <Text style={[styles.priceText, { color: colors.tertiary.default, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>${Number(item.price).toLocaleString('es-CO')}</Text>
+          <TouchableOpacity style={[styles.bookButton, { backgroundColor: colors.secondary.default }]} onPress={() => router.push(`/trip/${item.id}`)}>
+            <Text style={[styles.bookButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{s.viewDetails}</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-      <View style={styles.cardFooter}>
-        <View style={styles.tripDetails}>
-          <Ionicons name="time-outline" size={14} color={colors.text.muted} />
-          <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.departure_time} - {item.arrival_time}</Text>
-        </View>
-        <View style={styles.tripDetails}>
-          <Ionicons name="people-outline" size={14} color={colors.text.muted} />
-          <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.available_seats} {c.seats}</Text>
-        </View>
-      </View>
-      <View style={styles.cardBottom}>
-        <Text style={[styles.priceText, { color: colors.tertiary.default, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>${item.price.toLocaleString('es-CO')}</Text>
-        <TouchableOpacity style={[styles.bookButton, { backgroundColor: colors.secondary.default }]} onPress={() => router.push(`/trip/${item.id}`)}>
-          <Text style={[styles.bookButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{s.viewDetails}</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Link>
   );
 
   return (
@@ -111,25 +148,40 @@ export default function SearchScreen() {
           </View>
           <TouchableOpacity style={[styles.dateButton, { backgroundColor: colors.background.card, borderColor: colors.border.default }]}>
             <Ionicons name="calendar-outline" size={20} color={colors.text.secondary} />
-            <Text style={[styles.dateText, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}>{date}</Text>
+            <Text style={[styles.dateText, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}>{t.common.today}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.searchButton, { backgroundColor: colors.secondary.default }]} onPress={handleSearch}>
-            <Ionicons name="search" size={20} color={colors.primary.contrast} />
-            <Text style={[styles.searchButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{s.findTrips}</Text>
+          <TouchableOpacity style={[styles.searchButton, { backgroundColor: colors.secondary.default }]} onPress={handleSearch} disabled={isSearching}>
+            {isSearching ? (
+              <ActivityIndicator size="small" color={colors.primary.contrast} />
+            ) : (
+              <>
+                <Ionicons name="search" size={20} color={colors.primary.contrast} />
+                <Text style={[styles.searchButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{s.findTrips}</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
         {hasSearched && (
           <View style={[styles.resultsSection, { paddingHorizontal: spacing.lg }]}>
-            <Text style={[styles.resultsTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{results.length} {s.resultsFound}</Text>
-            {results.length === 0 ? (
+            {isSearching ? (
               <View style={[styles.emptyState, { alignItems: 'center' }]}>
-                <Ionicons name="car-sport-outline" size={64} color={colors.text.muted} />
-                <Text style={[styles.emptyText, { color: colors.text.primary, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{s.noTrips}</Text>
-                <Text style={[styles.emptySubtext, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{s.noTripsSub}</Text>
+                <ActivityIndicator size="large" color={colors.secondary.default} />
+                <Text style={[styles.emptyText, { color: colors.text.primary, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, marginTop: spacing.md }]}>Buscando viajes...</Text>
               </View>
             ) : (
-              <FlatList data={results} renderItem={renderTripCard} keyExtractor={(item) => item.id} scrollEnabled={false} ItemSeparatorComponent={() => <View style={styles.separator} />} />
+              <>
+                <Text style={[styles.resultsTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{results.length} {s.resultsFound}</Text>
+                {results.length === 0 ? (
+                  <View style={[styles.emptyState, { alignItems: 'center' }]}>
+                    <Ionicons name="car-sport-outline" size={64} color={colors.text.muted} />
+                    <Text style={[styles.emptyText, { color: colors.text.primary, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{s.noTrips}</Text>
+                    <Text style={[styles.emptySubtext, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{s.noTripsSub}</Text>
+                  </View>
+                ) : (
+                  <FlatList data={results} renderItem={renderTripCard} keyExtractor={(item) => item.id} scrollEnabled={false} ItemSeparatorComponent={() => <View style={styles.separator} />} />
+                )}
+              </>
             )}
           </View>
         )}
