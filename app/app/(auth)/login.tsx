@@ -14,15 +14,19 @@ import {
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { LoginButton } from '@/components/LoginButton';
-import { colors, borderRadius, typography, spacing } from '@/theme/colors';
+import { borderRadius, spacing, typography } from '@/theme/colors';
 import { validateInstitutionalEmail } from '@/utils/config';
 import { apiClient } from '@/api/auth';
 import { useAuth } from '@/context/AuthContext';
+import { useSettings } from '@/context/SettingsContext';
 import { showAlert } from '@/utils/alert';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useSettings();
+  const { colors, typography } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,17 +37,17 @@ export default function LoginScreen() {
     setErrors({});
 
     if (!email.trim()) {
-      setErrors({ email: 'Email requerido' });
+      setErrors({ email: t.common.emailRequired });
       return;
     }
 
     if (!validateInstitutionalEmail(email)) {
-      setErrors({ email: 'Usa tu correo @unisabana.edu.co' });
+      setErrors({ email: t.common.useInstitutionalEmail });
       return;
     }
 
     if (!password.trim()) {
-      setErrors({ password: 'Contraseña requerida' });
+      setErrors({ password: t.common.passwordRequired });
       return;
     }
 
@@ -53,15 +57,15 @@ export default function LoginScreen() {
       await login(response);
       router.replace('/(tabs)/home');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Error al iniciar sesión';
-      showAlert('Error de Login', message);
+      const message = error instanceof Error ? error.message : t.common.error;
+      showAlert(t.login.loginError, message);
     } finally {
       setLoading(false);
     }
   }, [email, password, router, login]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary.dark} />
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -73,22 +77,19 @@ export default function LoginScreen() {
         >
           <View style={styles.header}>
             <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
-            <Text style={styles.title}>Nexus</Text>
-            <Text style={styles.subtitle}>
-              Carpooling Universitario
-            </Text>
-            <Text style={styles.description}>
-              Conecta con otros estudiantes de la Universidad de La Sabana
-              para compartir trayectos de forma segura y eficiente
+            <Text style={[styles.title, { fontSize: typography.sizes.xxxl, fontWeight: typography.weights.extrabold, fontFamily: typography.family.bold, color: colors.primary.default }]}>{t.app.name}</Text>
+            <Text style={[styles.subtitle, { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, color: colors.secondary.default }]}>{t.login.carpoolingUni}</Text>
+            <Text style={[styles.description, { fontSize: typography.sizes.sm, textAlign: 'center', lineHeight: typography.sizes.md * typography.lineHeight.normal, paddingHorizontal: spacing.md, fontFamily: typography.family.regular, color: colors.text.secondary }]}>
+              {t.login.connectDesc}
             </Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Correo Institucional</Text>
-              <TextInput
-                style={[styles.input, errors.email && styles.inputError]}
-                placeholder="usuario@unisabana.edu.co"
+                <Text style={[styles.label, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.login.institutionalEmail}</Text>
+                <TextInput
+                 style={[styles.input, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }, !!errors.email && { borderColor: colors.border.error }]}
+                placeholder={t.app.domain}
                 placeholderTextColor={colors.text.muted}
                 value={email}
                 onChangeText={(text) => {
@@ -101,16 +102,16 @@ export default function LoginScreen() {
                 editable={!loading}
               />
               {errors.email ? (
-                <Text style={styles.errorText}>{errors.email}</Text>
+                <Text style={[styles.errorText, { color: colors.status.error, fontSize: typography.sizes.xs, fontFamily: typography.family.medium }]}>{errors.email}</Text>
               ) : null}
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Contraseña</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={[styles.input, errors.password && styles.inputError, { paddingRight: 40 }]}
-                  placeholder="Tu contraseña"
+                <Text style={[styles.label, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.login.password}</Text>
+              <View style={[styles.passwordContainer, { backgroundColor: colors.background.card, borderColor: colors.border.default, borderRadius: borderRadius.md }]}>
+                  <TextInput
+                   style={[styles.input, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }, !!errors.password && { borderColor: colors.border.error }, { paddingRight: 40 }]}
+                  placeholder={t.login.passwordPlaceholder}
                   placeholderTextColor={colors.text.muted}
                   value={password}
                   onChangeText={(text) => {
@@ -125,18 +126,18 @@ export default function LoginScreen() {
                   style={styles.eyeButton}
                   onPress={() => setShowPassword(!showPassword)}
                 >
-                  <Text style={styles.eyeButtonText}>
+                  <Text style={[styles.eyeButtonText, { fontSize: typography.sizes.md }]}>
                     {showPassword ? '🙈' : '👁'}
                   </Text>
                 </TouchableOpacity>
               </View>
               {errors.password ? (
-                <Text style={styles.errorText}>{errors.password}</Text>
+                <Text style={[styles.errorText, { color: colors.status.error, fontSize: typography.sizes.xs, fontFamily: typography.family.medium }]}>{errors.password}</Text>
               ) : null}
             </View>
 
             <LoginButton
-              title="Iniciar Sesión"
+              title={t.login.loginButton}
               onPress={handleLogin}
               loading={loading}
               disabled={!email.trim() || !password.trim()}
@@ -145,37 +146,37 @@ export default function LoginScreen() {
             />
 
             <View style={styles.dividerContainer}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>o</Text>
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.border.default }]} />
+              <Text style={[styles.dividerText, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.medium }]}>{t.common.or}</Text>
+              <View style={[styles.divider, { backgroundColor: colors.border.default }]} />
             </View>
 
             <LoginButton
-              title="Continuar con Microsoft 365 (Próximamente)"
-              onPress={() => showAlert('Próximamente', 'La autenticación con Microsoft estará disponible pronto')}
+              title={t.login.microsoft}
+              onPress={() => showAlert(t.login.comingSoon, t.login.microsoftComingSoon)}
               loading={false}
               variant="microsoft"
               style={styles.microsoftButton}
             />
 
             <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>
-                ¿No tienes cuenta?{' '}
+                <Text style={[styles.registerText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>
+                {t.login.noAccount}{' '}
               </Text>
               <Link href="/(auth)/register" asChild>
                 <TouchableOpacity>
-                  <Text style={styles.registerLink}>Regístrate aquí</Text>
+                  <Text style={[styles.registerLink, { color: colors.secondary.default, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.login.registerHere}</Text>
                 </TouchableOpacity>
               </Link>
             </View>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                Solo se permite acceso con correo institucional
+              <Text style={[styles.footerText, { color: colors.text.muted, fontSize: typography.sizes.xs, fontFamily: typography.family.regular }]}>
+                {t.login.footer}
               </Text>
-              <View style={styles.domainBadge}>
-                <Text style={styles.domainBadgeText}>
-                  @unisabana.edu.co
+              <View style={[styles.domainBadge, { backgroundColor: colors.background.card, borderColor: colors.border.default }]}>
+                <Text style={[styles.domainBadgeText, { color: colors.secondary.default, fontSize: typography.sizes.xs, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>
+                  {t.app.domain}
                 </Text>
               </View>
             </View>
@@ -187,13 +188,8 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
-  keyboardView: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  keyboardView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
@@ -210,56 +206,30 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   title: {
-    fontSize: typography.sizes.xxxl,
-    fontWeight: typography.weights.extrabold,
-    color: colors.primary.default,
     marginBottom: spacing.xs,
-    fontFamily: typography.family.bold,
   },
   subtitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.secondary.default,
     marginBottom: spacing.md,
-    fontFamily: typography.family.semibold,
   },
   description: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
     textAlign: 'center',
-    lineHeight: typography.sizes.md * typography.lineHeight.normal,
     paddingHorizontal: spacing.md,
-    fontFamily: typography.family.regular,
   },
-  form: {
-    width: '100%',
-  },
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
+  form: { width: '100%' },
+  inputGroup: { marginBottom: spacing.md },
   label: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
     marginBottom: spacing.sm,
-    fontFamily: typography.family.semibold,
   },
   input: {
-    backgroundColor: colors.background.card,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: borderRadius.md,
+    flex: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    fontFamily: typography.family.regular,
-  },
-  inputError: {
-    borderColor: colors.border.error,
   },
   passwordContainer: {
-    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    paddingRight: spacing.md,
   },
   eyeButton: {
     position: 'absolute',
@@ -272,31 +242,21 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: typography.sizes.xs,
-    color: colors.status.error,
-    marginTop: spacing.xs,
     fontFamily: typography.family.medium,
+    marginTop: spacing.xs,
   },
-  button: {
-    marginTop: spacing.sm,
-  },
-  microsoftButton: {
-    marginTop: spacing.sm,
-  },
+  button: { marginTop: spacing.sm },
+  microsoftButton: { marginTop: spacing.sm },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: spacing.lg,
   },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border.default,
-  },
+  divider: { flex: 1, height: 1 },
   dividerText: {
     fontSize: typography.sizes.sm,
-    color: colors.text.muted,
-    marginHorizontal: spacing.md,
     fontFamily: typography.family.medium,
+    marginHorizontal: spacing.md,
   },
   registerContainer: {
     flexDirection: 'row',
@@ -306,12 +266,10 @@ const styles = StyleSheet.create({
   },
   registerText: {
     fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
     fontFamily: typography.family.regular,
   },
   registerLink: {
     fontSize: typography.sizes.sm,
-    color: colors.secondary.default,
     fontWeight: typography.weights.semibold,
     fontFamily: typography.family.semibold,
   },
@@ -321,22 +279,18 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: typography.sizes.xs,
-    color: colors.text.muted,
-    marginBottom: spacing.sm,
     fontFamily: typography.family.regular,
+    marginBottom: spacing.sm,
   },
   domainBadge: {
-    backgroundColor: colors.background.card,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.sm,
     borderWidth: 1,
-    borderColor: colors.border.default,
   },
   domainBadgeText: {
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.medium,
-    color: colors.secondary.default,
     fontFamily: typography.family.medium,
   },
 });

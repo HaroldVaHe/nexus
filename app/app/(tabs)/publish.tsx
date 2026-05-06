@@ -13,12 +13,16 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, borderRadius, typography, spacing, shadow } from '@/theme/colors';
+import { borderRadius, spacing, shadow, colors } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HeaderMenu from '@/components/HeaderMenu';
+import { useSettings } from '@/context/SettingsContext';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function PublishTripScreen() {
   const router = useRouter();
+  const { t } = useSettings();
+  const { colors, typography } = useTheme();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [originDetail, setOriginDetail] = useState('');
@@ -34,19 +38,19 @@ export default function PublishTripScreen() {
 
   const handlePublish = () => {
     if (!origin || !destination || !date || !departureTime || !price) {
-      Alert.alert('Error', 'Por favor completa todos los campos obligatorios');
+      Alert.alert('Error', t.publish.fillRequired);
       return;
     }
 
     Alert.alert(
-      'Publicar Viaje',
-      '¿Deseas publicar este viaje?',
+      t.publish.publishConfirm,
+      t.publish.publishConfirmMsg.replace('${price}', `$${parseInt(price).toLocaleString('es-CO')}`),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         {
-          text: 'Publicar',
+          text: t.common.confirm,
           onPress: () => {
-            Alert.alert('Éxito', 'Tu viaje ha sido publicado');
+            Alert.alert(t.common.success, t.publish.publishSuccess);
             router.replace('/(tabs)/home');
           },
         },
@@ -56,18 +60,18 @@ export default function PublishTripScreen() {
 
   const NumberSelector = ({ value, onIncrement, onDecrement, label, min = 1, max = 7 }: any) => (
     <View style={styles.numberSelector}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>{label}</Text>
       <View style={styles.selectorRow}>
         <TouchableOpacity
-          style={[styles.selectorBtn, value <= min && styles.selectorBtnDisabled]}
+          style={[styles.selectorBtn, { borderColor: colors.border.default }, value <= min && styles.selectorBtnDisabled]}
           onPress={onDecrement}
           disabled={value <= min}
         >
           <Ionicons name="remove" size={20} color={value <= min ? colors.text.muted : colors.secondary.default} />
         </TouchableOpacity>
-        <Text style={styles.selectorValue}>{value}</Text>
+        <Text style={[styles.selectorValue, { color: colors.text.primary, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{value}</Text>
         <TouchableOpacity
-          style={[styles.selectorBtn, value >= max && styles.selectorBtnDisabled]}
+          style={[styles.selectorBtn, { borderColor: colors.border.default }, value >= max && styles.selectorBtnDisabled]}
           onPress={onIncrement}
           disabled={value >= max}
         >
@@ -80,65 +84,65 @@ export default function PublishTripScreen() {
   const seats = parseInt(totalSeats) || 1;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
         <View style={styles.headerLeft}>
-          <View style={styles.avatarSmall}>
-            <Text style={styles.headerAvatarText}>N</Text>
+          <View style={[styles.avatarSmall, { backgroundColor: colors.secondary.default }]}>
+            <Text style={[styles.headerAvatarText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>N</Text>
           </View>
-          <Text style={styles.headerBrand}>NEXUS</Text>
+          <Text style={[styles.headerBrand, { color: colors.primary.contrast, fontSize: typography.sizes.xxl, fontWeight: typography.weights.extrabold, fontFamily: typography.family.bold, letterSpacing: 2 }]}>NEXUS</Text>
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerIconBtn}>
             <Ionicons name="notifications-outline" size={24} color={colors.primary.contrast} />
-            <View style={styles.badge} />
+            <View style={[styles.badge, { backgroundColor: colors.status.error }]} />
           </TouchableOpacity>
           <HeaderMenu />
         </View>
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ruta</Text>
-          <View style={styles.card}>
-            <Text style={styles.inputLabel}>Punto de Origen *</Text>
-            <View style={styles.inputWrapper}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.route}</Text>
+          <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm, borderColor: colors.border.default }]}>
+            <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.origin}</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
               <Ionicons name="location-outline" size={20} color={colors.tertiary.default} />
               <TextInput
-                style={styles.input}
-                placeholder="Ej: Centro Comercial Fontanar"
+                style={[styles.input, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
+                placeholder={t.publish.originPlaceholder}
                 placeholderTextColor={colors.text.muted}
                 value={origin}
                 onChangeText={setOrigin}
               />
             </View>
 
-            <Text style={styles.inputLabel}>Detalle del origen</Text>
+            <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.originDetail}</Text>
             <TextInput
-              style={[styles.input, styles.textInput]}
-              placeholder="Ej: Entrada principal, parqueadero"
+              style={[styles.input, styles.textInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
+              placeholder={t.publish.originDetailPlaceholder}
               placeholderTextColor={colors.text.muted}
               value={originDetail}
               onChangeText={setOriginDetail}
               multiline
             />
 
-            <Text style={styles.inputLabel}>Punto de Destino *</Text>
-            <View style={styles.inputWrapper}>
+            <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.destination}</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
               <Ionicons name="flag-outline" size={20} color={colors.secondary.default} />
               <TextInput
-                style={styles.input}
-                placeholder="Ej: Universidad de La Sabana"
+                style={[styles.input, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
+                placeholder={t.publish.destinationPlaceholder}
                 placeholderTextColor={colors.text.muted}
                 value={destination}
                 onChangeText={setDestination}
               />
             </View>
 
-            <Text style={styles.inputLabel}>Detalle del destino</Text>
+            <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.destinationDetail}</Text>
             <TextInput
-              style={[styles.input, styles.textInput]}
-              placeholder="Ej: Entrada principal, puente"
+              style={[styles.input, styles.textInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
+              placeholder={t.publish.destinationDetailPlaceholder}
               placeholderTextColor={colors.text.muted}
               value={destinationDetail}
               onChangeText={setDestinationDetail}
@@ -147,39 +151,39 @@ export default function PublishTripScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Fecha y Hora</Text>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.dateButton}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.dateTime}</Text>
+          <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm, borderColor: colors.border.default }]}>
+            <TouchableOpacity style={[styles.dateButton, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
               <Ionicons name="calendar-outline" size={20} color={colors.secondary.default} />
-              <Text style={[styles.dateText, !date && { color: colors.text.muted }]}>
-                {date || 'Seleccionar fecha'}
+              <Text style={[styles.dateText, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.medium }, !date && { color: colors.text.muted }]}>
+                {date || t.publish.selectDate}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.dateButton}>
+            <TouchableOpacity style={[styles.dateButton, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
               <Ionicons name="time-outline" size={20} color={colors.secondary.default} />
-              <Text style={[styles.dateText, !departureTime && { color: colors.text.muted }]}>
-                {departureTime || 'Hora de salida'}
+              <Text style={[styles.dateText, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.medium }, !departureTime && { color: colors.text.muted }]}>
+                {departureTime || t.publish.departureTime}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Asientos y Precio</Text>
-          <View style={styles.card}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.seatsPrice}</Text>
+          <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm, borderColor: colors.border.default }]}>
             <NumberSelector
               value={seats}
-              label="Número de asientos"
+              label={t.publish.seatCount}
               onIncrement={() => setTotalSeats(String(seats + 1))}
               onDecrement={() => setTotalSeats(String(seats - 1))}
               max={7}
             />
-            <Text style={styles.inputLabel}>Precio por persona (COP) *</Text>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.currencySymbol}>$</Text>
+            <Text style={[styles.inputLabel, { color: colors.text.primary, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.pricePerPerson}</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.background.default, borderColor: colors.border.default }]}>
+              <Text style={[styles.currencySymbol, { color: colors.tertiary.default, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>$</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
                 placeholder="0"
                 placeholderTextColor={colors.text.muted}
                 value={price}
@@ -190,15 +194,15 @@ export default function PublishTripScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferencias</Text>
-          <View style={styles.card}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.preferences}</Text>
+          <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm, borderColor: colors.border.default }]}>
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfo}>
                 <Ionicons name="briefcase-outline" size={22} color={colors.text.secondary} />
                 <View style={styles.preferenceText}>
-                  <Text style={styles.preferenceLabel}>Permitir equipaje</Text>
-                  <Text style={styles.preferenceSubtext}>Maletas pequeñas</Text>
+                  <Text style={[styles.preferenceLabel, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>{t.publish.allowLuggage}</Text>
+                  <Text style={[styles.preferenceSubtext, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.publish.luggageSub}</Text>
                 </View>
               </View>
               <Switch
@@ -207,13 +211,13 @@ export default function PublishTripScreen() {
                 trackColor={{ false: colors.border.default, true: colors.tertiary.default }}
               />
             </View>
-            <View style={styles.preferenceDivider} />
+            <View style={[styles.preferenceDivider, { backgroundColor: colors.border.default }]} />
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfo}>
                 <Ionicons name="paw-outline" size={22} color={colors.text.secondary} />
                 <View style={styles.preferenceText}>
-                  <Text style={styles.preferenceLabel}>Permitir mascotas</Text>
-                  <Text style={styles.preferenceSubtext}>Mascotas pequeñas</Text>
+                  <Text style={[styles.preferenceLabel, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>{t.publish.allowPets}</Text>
+                  <Text style={[styles.preferenceSubtext, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.publish.petsSub}</Text>
                 </View>
               </View>
               <Switch
@@ -222,13 +226,13 @@ export default function PublishTripScreen() {
                 trackColor={{ false: colors.border.default, true: colors.tertiary.default }}
               />
             </View>
-            <View style={styles.preferenceDivider} />
+            <View style={[styles.preferenceDivider, { backgroundColor: colors.border.default }]} />
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfo}>
                 <Ionicons name="logo-bitcoin" size={22} color={colors.text.secondary} />
                 <View style={styles.preferenceText}>
-                  <Text style={styles.preferenceLabel}>Acepto Sabana Coins</Text>
-                  <Text style={styles.preferenceSubtext}>Pago con monedas virtuales</Text>
+                  <Text style={[styles.preferenceLabel, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>{t.publish.acceptSabanaCoins}</Text>
+                  <Text style={[styles.preferenceSubtext, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.publish.sabanaCoinsSub}</Text>
                 </View>
               </View>
               <Switch
@@ -240,11 +244,11 @@ export default function PublishTripScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notas Adicionales</Text>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.publish.additionalNotes}</Text>
           <TextInput
-            style={[styles.input, styles.textInput, styles.notesInput]}
-            placeholder="Información adicional para los pasajeros..."
+            style={[styles.input, styles.textInput, styles.notesInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
+            placeholder={t.publish.notesPlaceholder}
             placeholderTextColor={colors.text.muted}
             value={notes}
             onChangeText={setNotes}
@@ -253,10 +257,10 @@ export default function PublishTripScreen() {
           />
         </View>
 
-        <View style={styles.publishSection}>
-          <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
+        <View style={[styles.publishSection, { paddingHorizontal: spacing.lg }]}>
+          <TouchableOpacity style={[styles.publishButton, { backgroundColor: colors.tertiary.default, ...shadow.md }]} onPress={handlePublish}>
             <Ionicons name="send-outline" size={20} color={colors.primary.contrast} />
-            <Text style={styles.publishButtonText}>Publicar Viaje</Text>
+            <Text style={[styles.publishButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.publish.publishTrip}</Text>
           </TouchableOpacity>
         </View>
         <View style={{ height: spacing.xxl }} />
@@ -266,222 +270,47 @@ export default function PublishTripScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.lg,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  headerBrand: {
-    fontSize: typography.sizes.xxl,
-    fontWeight: typography.weights.bold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.bold,
-    letterSpacing: 2,
-  },
-  avatarSmall: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.secondary.default,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerAvatarText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.bold,
-  },
-  headerIconBtn: {
-    padding: spacing.sm,
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 8,
-    height: 8,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.status.error,
-  },
-  content: {
-    flex: 1,
-  },
-  section: {
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-    fontFamily: typography.family.bold,
-  },
-  card: {
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadow.sm,
-  },
-  inputLabel: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-    marginTop: spacing.sm,
-    fontFamily: typography.family.semibold,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background.default,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  currencySymbol: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.tertiary.default,
-    marginRight: spacing.xs,
-    fontFamily: typography.family.bold,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    fontFamily: typography.family.regular,
-  },
-  textInput: {
-    minHeight: 80,
-    paddingTop: spacing.md,
-  },
-  notesInput: {
-    minHeight: 100,
-  },
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background.default,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  dateText: {
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.medium,
-  },
-  numberSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  label: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
-    fontFamily: typography.family.semibold,
-  },
-  selectorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  selectorBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.background.default,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  selectorBtnDisabled: {
-    opacity: 0.4,
-  },
-  selectorValue: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-    marginHorizontal: spacing.lg,
-    fontFamily: typography.family.bold,
-  },
-  preferenceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  preferenceInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  preferenceText: {
-    marginLeft: spacing.md,
-  },
-  preferenceLabel: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
-    color: colors.text.primary,
-    fontFamily: typography.family.medium,
-  },
-  preferenceSubtext: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.muted,
-    fontFamily: typography.family.regular,
-  },
-  preferenceDivider: {
-    height: 1,
-    backgroundColor: colors.border.default,
-  },
-  publishSection: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-  },
-  publishButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.tertiary.default,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    ...shadow.md,
-  },
-  publishButtonText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.semibold,
-  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  headerBrand: {},
+  avatarSmall: { width: 36, height: 36, borderRadius: borderRadius.full, justifyContent: 'center', alignItems: 'center' },
+  headerAvatarText: {},
+  headerIconBtn: { padding: spacing.sm, position: 'relative' },
+  badge: { position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: borderRadius.full },
+  content: { flex: 1 },
+  section: { marginBottom: spacing.md },
+  sectionTitle: { marginBottom: spacing.sm },
+  card: { borderRadius: borderRadius.lg, padding: spacing.md, borderWidth: 1 },
+  inputLabel: { marginBottom: spacing.sm, marginTop: spacing.sm },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: borderRadius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, marginBottom: spacing.sm },
+  currencySymbol: { marginRight: spacing.xs },
+  input: { flex: 1, paddingVertical: spacing.md },
+  textInput: { minHeight: 80, paddingTop: spacing.md },
+  notesInput: { minHeight: 100 },
+  dateButton: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: borderRadius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, marginBottom: spacing.sm },
+  dateText: { marginLeft: spacing.sm },
+  numberSelector: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+  label: {},
+  selectorRow: { flexDirection: 'row', alignItems: 'center' },
+  selectorBtn: { width: 40, height: 40, borderRadius: borderRadius.full, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+  selectorBtnDisabled: { opacity: 0.4 },
+  selectorValue: { marginHorizontal: spacing.lg },
+  preferenceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.sm },
+  preferenceInfo: { flexDirection: 'row', alignItems: 'center' },
+  preferenceText: { marginLeft: spacing.md },
+  preferenceLabel: {},
+  preferenceSubtext: {},
+  preferenceDivider: { height: 1 },
+  publishSection: { paddingTop: spacing.md },
+  publishButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: borderRadius.md, paddingVertical: spacing.md },
+  publishButtonText: { marginLeft: spacing.sm },
 });

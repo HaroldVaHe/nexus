@@ -8,6 +8,7 @@ import {
   Manrope_800ExtraBold,
 } from '@expo-google-fonts/manrope';
 import { AuthProvider } from '@/context/AuthContext';
+import { SettingsProvider } from '@/context/SettingsContext';
 import { colors } from '@/theme/colors';
 
 export default function RootLayout() {
@@ -25,15 +26,17 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: colors.background.default,
-          },
-          animation: 'default',
-        }}
-      />
+      <SettingsProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: {
+              backgroundColor: colors.background.default,
+            },
+            animation: 'default',
+          }}
+        />
+      </SettingsProvider>
     </AuthProvider>
   );
 }

@@ -10,8 +10,10 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, borderRadius, typography, spacing, shadow } from '@/theme/colors';
+import { borderRadius, spacing, shadow, colors } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useSettings } from '@/context/SettingsContext';
+import { useTheme } from '@/hooks/useTheme';
 
 const MOCK_RECENT_TRIPS = [
   {
@@ -58,6 +60,9 @@ const MOCK_RECENT_TRIPS = [
 
 export default function ReportsScreen() {
   const router = useRouter();
+  const { t } = useSettings();
+  const { colors, typography } = useTheme();
+  const a = t.report;
   const [selectedTrip, setSelectedTrip] = useState<string | null>(null);
 
   const handleContinue = () => {
@@ -66,67 +71,68 @@ export default function ReportsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Reportes</Text>
+        <Text style={[styles.headerTitle, { color: colors.primary.contrast, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{a.title}</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.infoCard}>
+        <View style={[styles.infoCard, { backgroundColor: colors.secondary.default + '15', borderRadius: borderRadius.lg, padding: spacing.md, marginHorizontal: spacing.lg, marginTop: spacing.lg }]}>
           <Ionicons name="information-circle" size={24} color={colors.secondary.default} />
-          <Text style={styles.infoText}>
-            Selecciona el viaje sobre el cual deseas presentar un reporte.
+          <Text style={[styles.infoText, { color: colors.text.primary, marginLeft: spacing.sm, flex: 1, fontSize: typography.sizes.sm, fontFamily: typography.family.regular, lineHeight: typography.sizes.sm * typography.lineHeight.normal }]}>
+            {a.selectTrip}
           </Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Viajes Recientes</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, marginBottom: spacing.sm, marginHorizontal: spacing.lg, marginTop: spacing.lg }]}>{a.recentTrips}</Text>
 
         {MOCK_RECENT_TRIPS.map(trip => (
           <TouchableOpacity
             key={trip.id}
             style={[
               styles.tripCard,
-              selectedTrip === trip.id && styles.tripCardSelected,
+              { backgroundColor: colors.background.card, borderRadius: borderRadius.lg, padding: spacing.md, marginHorizontal: spacing.lg, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border.default },
+              selectedTrip === trip.id && { borderColor: colors.secondary.default, backgroundColor: colors.secondary.default + '08' },
             ]}
             onPress={() => setSelectedTrip(trip.id)}
           >
-            <View style={styles.tripHeader}>
-              <View style={styles.roleBadge}>
+            <View style={[styles.tripHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }]}>
+              <View style={[styles.roleBadge, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.default, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: borderRadius.sm, gap: spacing.xs }]}>
                 <Ionicons
                   name={trip.roleIcon as any}
                   size={14}
                   color={colors.secondary.default}
                 />
-                <Text style={styles.roleText}>{trip.role}</Text>
+                <Text style={[styles.roleText, { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.text.secondary, fontFamily: typography.family.semibold }]}>{trip.role}</Text>
               </View>
-              <Text style={styles.tripDate}>{trip.date}</Text>
+              <Text style={[styles.tripDate, { fontSize: typography.sizes.xs, color: colors.text.muted, fontFamily: typography.family.regular }]}>{trip.date}</Text>
             </View>
 
-            <View style={styles.routeInfo}>
-              <View style={styles.routePoint}>
+            <View style={[styles.routeInfo, { marginBottom: spacing.sm }]}>
+              <View style={[styles.routePoint, { flexDirection: 'row', alignItems: 'center' }]}>
                 <Ionicons name="location" size={14} color={colors.tertiary.default} />
-                <Text style={styles.routeText} numberOfLines={1}>{trip.origin}</Text>
+                <Text style={[styles.routeText, { fontSize: typography.sizes.sm, color: colors.text.primary, fontFamily: typography.family.regular, marginLeft: spacing.sm, flex: 1 }]} numberOfLines={1}>{trip.origin}</Text>
               </View>
-              <View style={styles.routeLine} />
-              <View style={styles.routePoint}>
+              <View style={[styles.routeLine, { width: 1, height: 14, backgroundColor: colors.border.default, marginLeft: 7, marginVertical: spacing.xs }]} />
+              <View style={[styles.routePoint, { flexDirection: 'row', alignItems: 'center' }]}>
                 <Ionicons name="flag" size={14} color={colors.secondary.default} />
-                <Text style={styles.routeText} numberOfLines={1}>{trip.destination}</Text>
+                <Text style={[styles.routeText, { fontSize: typography.sizes.sm, color: colors.text.primary, fontFamily: typography.family.regular, marginLeft: spacing.sm, flex: 1 }]} numberOfLines={1}>{trip.destination}</Text>
               </View>
             </View>
 
-            <View style={styles.tripFooter}>
+            <View style={[styles.tripFooter, { flexDirection: 'row', alignItems: 'center', gap: spacing.xs }]}>
               <Ionicons name="time-outline" size={14} color={colors.text.muted} />
-              <Text style={styles.detailText}>
+              <Text style={[styles.detailText, { fontSize: typography.sizes.xs, color: colors.text.muted, fontFamily: typography.family.regular }]}>
                 {trip.time} — {trip.role === 'Conductor' ? trip.passenger_name : trip.driver_name}
               </Text>
             </View>
 
             {selectedTrip === trip.id && (
-              <View style={styles.selectedIndicator}>
+              <View style={[styles.selectedIndicator, { position: 'absolute', top: spacing.md, right: spacing.md }]}>
                 <Ionicons name="checkmark-circle" size={20} color={colors.secondary.default} />
               </View>
             )}
@@ -136,13 +142,14 @@ export default function ReportsScreen() {
         <TouchableOpacity
           style={[
             styles.submitButton,
-            !selectedTrip && styles.submitButtonDisabled,
+            { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.secondary.default, borderRadius: borderRadius.md, paddingVertical: spacing.md, marginHorizontal: spacing.lg, marginTop: spacing.lg },
+            !selectedTrip && { backgroundColor: colors.border.default },
           ]}
           onPress={handleContinue}
           disabled={!selectedTrip}
         >
           <Ionicons name="document-text-outline" size={20} color={colors.primary.contrast} />
-          <Text style={styles.submitButtonText}>Continuar con Reporte</Text>
+          <Text style={[styles.submitButtonText, { color: colors.primary.contrast, marginLeft: spacing.sm, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{a.selectTrip}</Text>
         </TouchableOpacity>
 
         <View style={{ height: spacing.xxl }} />
@@ -152,154 +159,35 @@ export default function ReportsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.md,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
-  backButton: {
-    padding: spacing.xs,
-  },
-  headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.semibold,
-  },
-  content: {
-    flex: 1,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.secondary.default + '15',
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.lg,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: typography.sizes.sm,
-    color: colors.text.primary,
-    marginLeft: spacing.sm,
-    lineHeight: typography.sizes.sm * typography.lineHeight.normal,
-    fontFamily: typography.family.regular,
-  },
-  sectionTitle: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
-    fontFamily: typography.family.bold,
-  },
-  tripCard: {
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    ...shadow.sm,
-  },
-  tripCardSelected: {
-    borderColor: colors.secondary.default,
-    backgroundColor: colors.secondary.default + '08',
-  },
-  tripHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background.default,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    gap: spacing.xs,
-  },
-  roleText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.secondary,
-    fontFamily: typography.family.semibold,
-  },
-  tripDate: {
-    fontSize: typography.sizes.xs,
-    color: colors.text.muted,
-    fontFamily: typography.family.regular,
-  },
-  routeInfo: {
-    marginBottom: spacing.sm,
-  },
-  routePoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  routeText: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.primary,
-    marginLeft: spacing.sm,
-    flex: 1,
-    fontFamily: typography.family.regular,
-  },
-  routeLine: {
-    width: 1,
-    height: 14,
-    backgroundColor: colors.border.default,
-    marginLeft: 7,
-    marginVertical: spacing.xs,
-  },
-  tripFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  detailText: {
-    fontSize: typography.sizes.xs,
-    color: colors.text.muted,
-    fontFamily: typography.family.regular,
-  },
-  selectedIndicator: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-  },
-  submitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.secondary.default,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.lg,
-    ...shadow.md,
-  },
-  submitButtonDisabled: {
-    backgroundColor: colors.border.default,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  submitButtonText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.semibold,
-  },
+  backButton: { padding: spacing.xs },
+  headerTitle: {},
+  content: { flex: 1 },
+  infoCard: {},
+  infoText: {},
+  sectionTitle: {},
+  tripCard: { ...shadow.sm },
+  tripCardSelected: {},
+  tripHeader: {},
+  roleBadge: {},
+  roleText: {},
+  tripDate: {},
+  routeInfo: {},
+  routePoint: {},
+  routeText: {},
+  routeLine: {},
+  tripFooter: {},
+  detailText: {},
+  selectedIndicator: {},
+  submitButton: { ...shadow.md },
+  submitButtonDisabled: { shadowOpacity: 0, elevation: 0 },
+  submitButtonText: {},
 });

@@ -11,62 +11,24 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, borderRadius, typography, spacing, shadow } from '@/theme/colors';
+import { borderRadius, spacing, shadow, colors, typography } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/hooks/useTheme';
+import { useSettings } from '@/context/SettingsContext';
 
 const MOCK_NOTIFICATIONS = [
-  {
-    id: '1',
-    type: 'booking_confirmed',
-    title: 'Reserva Confirmada',
-    message: 'Tu reserva para el viaje de Carlos Martínez ha sido confirmada.',
-    is_read: false,
-    created_at: 'Hace 5 min',
-  },
-  {
-    id: '2',
-    type: 'sabana_coins_earned',
-    title: 'Sabana Coins Ganados',
-    message: '¡Ganaste 25 Sabana Coins por tu último viaje completado!',
-    is_read: false,
-    created_at: 'Hace 1 hora',
-  },
-  {
-    id: '3',
-    type: 'rating_received',
-    title: 'Nueva Calificación',
-    message: 'Carlos te calificó con 5 estrellas. ¡Excelente!',
-    is_read: false,
-    created_at: 'Hace 2 horas',
-  },
-  {
-    id: '4',
-    type: 'payment_received',
-    title: 'Pago Recibido',
-    message: 'Se ha procesado tu pago de $8.000 para el viaje del 3 de mayo.',
-    is_read: true,
-    created_at: 'Ayer',
-  },
-  {
-    id: '5',
-    type: 'trip_modified',
-    title: 'Viaje Modificado',
-    message: 'El conductor María López modificó el punto de encuentro de tu viaje.',
-    is_read: true,
-    created_at: 'Hace 2 días',
-  },
-  {
-    id: '6',
-    type: 'booking_cancelled',
-    title: 'Reserva Cancelada',
-    message: 'Tu reserva para el viaje del 28 de abril ha sido cancelada.',
-    is_read: true,
-    created_at: 'Hace 3 días',
-  },
+  { id: '1', type: 'booking_confirmed', is_read: false, created_at: 'Hace 5 min' },
+  { id: '2', type: 'sabana_coins_earned', is_read: false, created_at: 'Hace 1 hora' },
+  { id: '3', type: 'rating_received', is_read: false, created_at: 'Hace 2 horas' },
+  { id: '4', type: 'payment_received', is_read: true, created_at: 'Ayer' },
+  { id: '5', type: 'trip_modified', is_read: true, created_at: 'Hace 2 días' },
+  { id: '6', type: 'booking_cancelled', is_read: true, created_at: 'Hace 3 días' },
 ];
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { t } = useSettings();
+  const { colors, typography } = useTheme();
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
   const unread = notifications.filter(n => !n.is_read).length;
 
@@ -83,16 +45,36 @@ export default function NotificationsScreen() {
     }
   };
 
+  const getNotificationText = (type: string) => {
+    switch (type) {
+      case 'booking_confirmed':
+        return { title: t.notifications.bookingConfirmed, message: t.notifications.bookingConfirmedMsg };
+      case 'sabana_coins_earned':
+        return { title: t.notifications.sabanaCoins, message: t.notifications.sabanaCoinsMsg };
+      case 'rating_received':
+        return { title: t.notifications.ratingReceived, message: t.notifications.ratingReceivedMsg };
+      case 'payment_received':
+        return { title: t.notifications.paymentReceived, message: t.notifications.paymentReceivedMsg };
+      case 'trip_modified':
+        return { title: t.notifications.tripModified, message: t.notifications.tripModifiedMsg };
+      case 'booking_cancelled':
+        return { title: t.notifications.bookingCancelled, message: t.notifications.bookingCancelledMsg };
+      default:
+        return { title: '', message: '' };
+    }
+  };
+
   const markAllAsRead = () => {
     setNotifications(notifications.map(n => ({ ...n, is_read: true })));
   };
 
   const renderNotification = ({ item }: { item: typeof MOCK_NOTIFICATIONS[0] }) => {
     const icon = getNotificationIcon(item.type);
+    const { title, message } = getNotificationText(item.type);
 
     return (
       <TouchableOpacity
-        style={[styles.notificationCard, !item.is_read && styles.unreadCard]}
+        style={[styles.notificationCard, { backgroundColor: colors.background.card, ...shadow.sm }, !item.is_read && { borderColor: colors.secondary.default + '30', borderWidth: 1 }]}
         onPress={() => {}}
       >
         <View style={[styles.iconContainer, { backgroundColor: icon.bg }]}>
@@ -100,35 +82,35 @@ export default function NotificationsScreen() {
         </View>
         <View style={styles.notificationContent}>
           <View style={styles.notificationHeader}>
-            <Text style={[styles.notificationTitle, !item.is_read && styles.unreadTitle]}>
-              {item.title}
+            <Text style={[styles.notificationTitle, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }, !item.is_read && { color: colors.secondary.default }]}>
+              {title}
             </Text>
-            {!item.is_read && <View style={styles.unreadDot} />}
+            {!item.is_read && <View style={[styles.unreadDot, { backgroundColor: colors.secondary.default }]} />}
           </View>
-          <Text style={styles.notificationMessage} numberOfLines={2}>{item.message}</Text>
-          <Text style={styles.notificationTime}>{item.created_at}</Text>
+          <Text style={[styles.notificationMessage, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular, lineHeight: typography.sizes.sm * typography.lineHeight.normal }]} numberOfLines={2}>{message}</Text>
+          <Text style={[styles.notificationTime, { color: colors.text.muted, fontSize: typography.sizes.xs, fontFamily: typography.family.regular }]}>{item.created_at}</Text>
         </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notificaciones</Text>
+        <Text style={[styles.headerTitle, { color: colors.primary.contrast, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.notifications.title}</Text>
         <TouchableOpacity onPress={markAllAsRead}>
-          <Text style={styles.markReadText}>Marcar leído</Text>
+          <Text style={[styles.markReadText, { color: colors.secondary.light, fontSize: typography.sizes.sm, fontFamily: typography.family.medium }]}>{t.notifications.markRead}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         {unread > 0 && (
-          <View style={styles.unreadBadge}>
-            <Text style={styles.unreadBadgeText}>
-              {unread} {unread === 1 ? 'notificación sin leer' : 'notificaciones sin leer'}
+          <View style={[styles.unreadBadge, { backgroundColor: colors.secondary.default + '15' }]}>
+            <Text style={[styles.unreadBadgeText, { color: colors.secondary.default, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>
+              {unread} {unread === 1 ? t.notifications.unread : t.notifications.unreadPlural}
             </Text>
           </View>
         )}
@@ -147,107 +129,28 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.lg,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
-  backButton: {
-    padding: spacing.xs,
-  },
-  headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.semibold,
-  },
-  markReadText: {
-    fontSize: typography.sizes.sm,
-    color: colors.secondary.light,
-    fontFamily: typography.family.medium,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-  },
-  unreadBadge: {
-    backgroundColor: colors.secondary.default + '15',
-    padding: spacing.sm,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.md,
-    alignItems: 'center',
-  },
-  unreadBadgeText: {
-    fontSize: typography.sizes.sm,
-    color: colors.secondary.default,
-    fontWeight: typography.weights.semibold,
-    fontFamily: typography.family.semibold,
-  },
-  notificationCard: {
-    flexDirection: 'row',
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadow.sm,
-  },
-  unreadCard: {
-    borderWidth: 1,
-    borderColor: colors.secondary.default + '30',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  notificationContent: {
-    flex: 1,
-  },
-  notificationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-  },
-  notificationTitle: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
-    fontFamily: typography.family.semibold,
-  },
-  unreadTitle: {
-    color: colors.secondary.default,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.secondary.default,
-  },
-  notificationMessage: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
-    lineHeight: typography.sizes.sm * typography.lineHeight.normal,
-    fontFamily: typography.family.regular,
-  },
-  notificationTime: {
-    fontSize: typography.sizes.xs,
-    color: colors.text.muted,
-    marginTop: spacing.xs,
-    fontFamily: typography.family.regular,
-  },
-  separator: {
-    height: spacing.sm,
-  },
+  backButton: { padding: spacing.xs },
+  headerTitle: {},
+  markReadText: {},
+  content: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
+  unreadBadge: { padding: spacing.sm, borderRadius: borderRadius.md, marginBottom: spacing.md, alignItems: 'center' },
+  unreadBadgeText: {},
+  notificationCard: { flexDirection: 'row', borderRadius: borderRadius.lg, padding: spacing.md },
+  iconContainer: { width: 40, height: 40, borderRadius: borderRadius.md, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
+  notificationContent: { flex: 1 },
+  notificationHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs },
+  notificationTitle: {},
+  unreadDot: { width: 8, height: 8, borderRadius: borderRadius.full },
+  notificationMessage: {},
+  notificationTime: { marginTop: spacing.xs },
+  separator: { height: spacing.sm },
 });

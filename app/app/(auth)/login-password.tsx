@@ -14,11 +14,15 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LoginButton } from '@/components/LoginButton';
-import { colors, borderRadius, typography, spacing } from '@/theme/colors';
+import { borderRadius, spacing } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useSettings } from '@/context/SettingsContext';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function LoginPasswordScreen() {
   const router = useRouter();
+  const { t } = useSettings();
+  const { colors, typography } = useTheme();
   const params = useLocalSearchParams();
   const email = (params.email as string) || '';
   const [password, setPassword] = useState('');
@@ -30,7 +34,7 @@ export default function LoginPasswordScreen() {
     setPasswordError('');
 
     if (!password.trim()) {
-      setPasswordError('Password is required');
+      setPasswordError(t.common.passwordRequired);
       return;
     }
 
@@ -39,21 +43,21 @@ export default function LoginPasswordScreen() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       router.replace('/(tabs)/home');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Login failed';
-      Alert.alert('Error', message);
+      const message = error instanceof Error ? error.message : t.login.loginError;
+      Alert.alert(t.common.error, message);
     } finally {
       setLoading(false);
     }
   }, [password, router]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary.dark} />
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Iniciar Sesión</Text>
+        <Text style={[{ fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }, { color: colors.primary.contrast }]}>{t.login.title}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -65,20 +69,17 @@ export default function LoginPasswordScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.emailDisplay}>
+          <View style={[styles.emailDisplay, { backgroundColor: colors.background.card, borderColor: colors.border.default }]}>
             <Ionicons name="mail-outline" size={20} color={colors.secondary.default} />
-            <Text style={styles.emailText}>{email || 'correo@unisabana.edu.co'}</Text>
+            <Text style={[{ fontSize: typography.sizes.md, fontFamily: typography.family.regular }, { color: colors.text.primary }]}>{email || 'correo@unisabana.edu.co'}</Text>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Contraseña</Text>
-            <View style={styles.passwordContainer}>
+            <Text style={[styles.label, { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }, { color: colors.text.primary }]}>{t.login.password}</Text>
+            <View style={[styles.passwordContainer, { backgroundColor: colors.background.card, borderColor: colors.border.default }]}>
               <TextInput
-                style={[
-                  styles.input,
-                  passwordError && styles.inputError,
-                ]}
-                placeholder="Ingresa tu contraseña"
+                style={[{ fontSize: typography.sizes.md, fontFamily: typography.family.regular }, { color: colors.text.primary }, !!passwordError && { borderColor: colors.border.error }]}
+                placeholder={t.login.passwordPlaceholder}
                 placeholderTextColor={colors.text.muted}
                 value={password}
                 onChangeText={(text) => {
@@ -101,16 +102,16 @@ export default function LoginPasswordScreen() {
               </TouchableOpacity>
             </View>
             {passwordError ? (
-              <Text style={styles.errorText}>{passwordError}</Text>
+              <Text style={[{ fontSize: typography.sizes.xs, fontFamily: typography.family.medium }, styles.errorText, { color: colors.status.error }]}>{passwordError}</Text>
             ) : null}
           </View>
 
           <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+            <Text style={[{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }, styles.forgotPasswordText, { color: colors.secondary.default }]}>{t.login.forgotPassword}</Text>
           </TouchableOpacity>
 
           <LoginButton
-            title="Iniciar Sesión"
+            title={t.login.loginButton}
             onPress={handleLogin}
             loading={loading}
             disabled={!password.trim()}
@@ -124,30 +125,16 @@ export default function LoginPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
-  backButton: {
-    padding: spacing.xs,
-  },
-  headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.semibold,
-  },
-  keyboardView: {
-    flex: 1,
-  },
+  backButton: { padding: spacing.xs },
+  keyboardView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
@@ -157,48 +144,30 @@ const styles = StyleSheet.create({
   emailDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.card,
-    padding: spacing.md,
     borderRadius: borderRadius.md,
+    padding: spacing.md,
     marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.border.default,
   },
   emailText: {
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
     marginLeft: spacing.sm,
-    fontFamily: typography.family.regular,
   },
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
+  inputGroup: { marginBottom: spacing.md },
   label: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
     marginBottom: spacing.sm,
-    fontFamily: typography.family.semibold,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   input: {
     flex: 1,
-    backgroundColor: colors.background.card,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: borderRadius.md,
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
     paddingRight: spacing.xl + spacing.md,
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    fontFamily: typography.family.regular,
-  },
-  inputError: {
-    borderColor: colors.border.error,
   },
   eyeButton: {
     position: 'absolute',
@@ -206,22 +175,12 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
   errorText: {
-    fontSize: typography.sizes.xs,
-    color: colors.status.error,
     marginTop: spacing.xs,
-    fontFamily: typography.family.medium,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
     marginBottom: spacing.xl,
   },
-  forgotPasswordText: {
-    fontSize: typography.sizes.sm,
-    color: colors.secondary.default,
-    fontWeight: typography.weights.medium,
-    fontFamily: typography.family.medium,
-  },
-  button: {
-    marginTop: spacing.sm,
-  },
+  forgotPasswordText: {},
+  button: { marginTop: spacing.sm },
 });

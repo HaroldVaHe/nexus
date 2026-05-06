@@ -1,8 +1,12 @@
 import { Tabs } from 'expo-router';
-import { colors, spacing, typography } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useSettings } from '@/context/SettingsContext';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function TabsLayout() {
+  const { t } = useSettings();
+  const { colors, typography, spacing } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
@@ -35,7 +39,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Inicio',
+          title: t.tabs.home,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -44,7 +48,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: 'Buscar',
+          title: t.tabs.search,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
@@ -53,8 +57,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="publish"
         options={{
-          title: 'Publicar',
-          tabBarIcon: ({ color, size }) => (
+          title: t.tabs.publish,
+          tabBarIcon: ({ size }) => (
             <Ionicons name="add-circle" size={size + 8} color={colors.tertiary.default} />
           ),
         }}
@@ -62,7 +66,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Perfil',
+          title: t.tabs.profile,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),

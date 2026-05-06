@@ -11,8 +11,10 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
-import { colors, borderRadius, typography, spacing, shadow } from '@/theme/colors';
+import { borderRadius, spacing, shadow, colors } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/hooks/useTheme';
+import { useSettings } from '@/context/SettingsContext';
 
 const MOCK_BOOKINGS = [
   {
@@ -65,6 +67,8 @@ type TabType = 'upcoming' | 'past';
 
 export default function BookingsScreen() {
   const router = useRouter();
+  const { colors, typography } = useTheme();
+  const { t } = useSettings();
   const [activeTab, setActiveTab] = useState<TabType>('upcoming');
 
   const upcoming = MOCK_BOOKINGS.filter(b => b.status === 'confirmed' || b.status === 'pending');
@@ -73,10 +77,10 @@ export default function BookingsScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return { bg: colors.status.successBg, text: colors.status.success, label: 'Confirmado' };
-      case 'pending': return { bg: colors.status.warningBg, text: colors.status.warning, label: 'Pendiente' };
-      case 'completed': return { bg: colors.status.infoBg, text: colors.status.info, label: 'Completado' };
-      default: return { bg: colors.status.errorBg, text: colors.status.error, label: 'Cancelado' };
+      case 'confirmed': return { bg: colors.status.successBg, text: colors.status.success, label: t.bookings.confirmed };
+      case 'pending': return { bg: colors.status.warningBg, text: colors.status.warning, label: t.bookings.pending };
+      case 'completed': return { bg: colors.status.infoBg, text: colors.status.info, label: t.bookings.completed };
+      default: return { bg: colors.status.errorBg, text: colors.status.error, label: t.bookings.cancelled };
     }
   };
 
@@ -85,19 +89,19 @@ export default function BookingsScreen() {
 
     return (
       <Link href={`/trip/${item.id}`} asChild>
-        <TouchableOpacity style={styles.bookingCard}>
+        <TouchableOpacity style={[styles.bookingCard, { backgroundColor: colors.background.card, ...shadow.sm }]}>
           <View style={styles.cardHeader}>
-            <View style={styles.statusBadge}>
-              <Text style={[styles.statusText, { color: statusStyle.text }]}>{statusStyle.label}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+              <Text style={[styles.statusText, { color: statusStyle.text, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{statusStyle.label}</Text>
             </View>
-            <View style={styles.typeBadge}>
+            <View style={[styles.typeBadge, { backgroundColor: colors.background.default }]}>
               <Ionicons
                 name={item.is_driver ? 'car-sport' : 'person'}
                 size={14}
                 color={colors.secondary.default}
               />
-              <Text style={styles.typeText}>
-                {item.is_driver ? 'Conductor' : 'Pasajero'}
+              <Text style={[styles.typeText, { color: colors.secondary.default, fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>
+                {item.is_driver ? t.common.driver : t.common.passenger}
               </Text>
             </View>
           </View>
@@ -105,42 +109,42 @@ export default function BookingsScreen() {
           <View style={styles.routeInfo}>
             <View style={styles.routePoint}>
               <Ionicons name="location" size={14} color={colors.tertiary.default} />
-              <Text style={styles.routeText}>{item.origin}</Text>
+              <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.origin}</Text>
             </View>
-            <View style={styles.routeLine} />
+            <View style={[styles.routeLine, { backgroundColor: colors.border.default }]} />
             <View style={styles.routePoint}>
               <Ionicons name="flag" size={14} color={colors.secondary.default} />
-              <Text style={styles.routeText}>{item.destination}</Text>
+              <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.destination}</Text>
             </View>
           </View>
 
           <View style={styles.cardFooter}>
             <View style={styles.detailItem}>
               <Ionicons name="calendar-outline" size={14} color={colors.text.muted} />
-              <Text style={styles.detailText}>{item.date}</Text>
+              <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular, marginLeft: spacing.xs }]}>{item.date}</Text>
             </View>
             <View style={styles.detailItem}>
               <Ionicons name="time-outline" size={14} color={colors.text.muted} />
-              <Text style={styles.detailText}>{item.time}</Text>
+              <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular, marginLeft: spacing.xs }]}>{item.time}</Text>
             </View>
-            <Text style={styles.priceText}>${item.price.toLocaleString('es-CO')}</Text>
+            <Text style={[styles.priceText, { color: colors.tertiary.default, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>${item.price.toLocaleString('es-CO')}</Text>
           </View>
 
           {!item.is_driver && item.status === 'confirmed' && (
             <TouchableOpacity
-              style={styles.cancelButton}
+              style={[styles.cancelButton, { borderTopColor: colors.border.default }]}
               onPress={() => {}}
             >
-              <Text style={styles.cancelButtonText}>Cancelar Reserva</Text>
+              <Text style={[styles.cancelButtonText, { color: colors.status.error, fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>Cancelar Reserva</Text>
             </TouchableOpacity>
           )}
 
           {item.is_driver && (
-            <View style={styles.passengerInfo}>
+            <View style={[styles.passengerInfo, { borderTopColor: colors.border.default }]}>
               <Ionicons name="people-outline" size={14} color={colors.text.muted} />
-              <Text style={styles.detailText}>
-                {item.passengers} {item.passengers === 1 ? 'pasajero' : 'pasajeros'}
-              </Text>
+<Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular, marginLeft: spacing.xs }]}>
+                 {item.passengers} {item.passengers === 1 ? t.bookings.passenger : t.bookings.passengers}
+               </Text>
             </View>
           )}
         </TouchableOpacity>
@@ -149,59 +153,57 @@ export default function BookingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mis Viajes</Text>
+        <Text style={{ color: colors.primary.contrast, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }}>{t.bookings.title}</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, { backgroundColor: colors.background.card, borderBottomColor: colors.border.default }]}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'upcoming' && styles.activeTab]}
+          style={[styles.tab, { marginRight: spacing.lg }, activeTab === 'upcoming' && { borderBottomColor: colors.secondary.default }]}
           onPress={() => setActiveTab('upcoming')}
         >
-          <Text style={[
-            styles.tabText,
-            activeTab === 'upcoming' && styles.activeTabText
-          ]}>Próximos</Text>
+          <Text style={[styles.tabText, { color: colors.text.muted }, activeTab === 'upcoming' && { color: colors.secondary.default, fontWeight: typography.weights.semibold }]}>
+            {t.bookings.upcoming}
+          </Text>
           {upcoming.length > 0 && (
-            <View style={[styles.tabBadge, activeTab === 'upcoming' && styles.activeTabBadge]}>
-              <Text style={[styles.tabBadgeText, activeTab === 'upcoming' && styles.activeTabBadgeText]}>
+            <View style={[styles.tabBadge, { backgroundColor: colors.text.muted }, activeTab === 'upcoming' && { backgroundColor: colors.secondary.default + '30' }]}>
+              <Text style={[styles.tabBadgeText, { color: colors.background.card }, activeTab === 'upcoming' && { color: colors.secondary.default }]}>
                 {upcoming.length}
               </Text>
             </View>
           )}
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'past' && styles.activeTab]}
+          style={[styles.tab, { marginRight: spacing.lg }, activeTab === 'past' && { borderBottomColor: colors.secondary.default }]}
           onPress={() => setActiveTab('past')}
         >
-          <Text style={[
-            styles.tabText,
-            activeTab === 'past' && styles.activeTabText
-          ]}>Historial</Text>
+          <Text style={[styles.tabText, { color: colors.text.muted }, activeTab === 'past' && { color: colors.secondary.default, fontWeight: typography.weights.semibold }]}>
+            {t.bookings.history}
+          </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         {items.length === 0 ? (
-          <View style={styles.emptyState}>
+          <View style={[styles.emptyState, { alignItems: 'center' }]}>
             <Ionicons name="car-sport-outline" size={64} color={colors.text.muted} />
-            <Text style={styles.emptyText}>
-              {activeTab === 'upcoming' ? 'No tienes viajes próximos' : 'No hay viajes en el historial'}
+            <Text style={[styles.emptyText, { color: colors.text.primary }]}>
+              {activeTab === 'upcoming' ? t.bookings.noUpcoming : t.bookings.noHistory}
             </Text>
-            <Text style={styles.emptySubtext}>
-              {activeTab === 'upcoming' ? 'Busca un viaje o publica uno nuevo' : 'Tus viajes completados aparecerán aquí'}
+            <Text style={[styles.emptySubtext, { color: colors.text.muted }]}>
+              {activeTab === 'upcoming' ? t.bookings.noUpcomingSub : t.bookings.noHistorySub}
             </Text>
             {activeTab === 'upcoming' && (
               <TouchableOpacity
-                style={styles.emptyButton}
+                style={[styles.emptyButton, { backgroundColor: colors.secondary.default }]}
                 onPress={() => router.push('/search')}
               >
-                <Text style={styles.emptyButtonText}>Buscar Viajes</Text>
+                <Text style={[styles.emptyButtonText, { color: colors.primary.contrast }]}>{t.bookings.searchTrips}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -221,59 +223,32 @@ export default function BookingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.lg,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
-  backButton: {
-    padding: spacing.xs,
-  },
-  headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.semibold,
-  },
+  backButton: { padding: spacing.xs },
+  headerTitle: {},
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.background.card,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.default,
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
-    marginRight: spacing.lg,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  activeTab: {
-    borderBottomColor: colors.secondary.default,
-  },
-  tabText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
-    color: colors.text.muted,
-    fontFamily: typography.family.medium,
-  },
-  activeTabText: {
-    color: colors.secondary.default,
-    fontWeight: typography.weights.semibold,
-  },
+  tabText: {},
   tabBadge: {
-    backgroundColor: colors.text.muted,
     borderRadius: borderRadius.full,
     minWidth: 20,
     height: 20,
@@ -282,28 +257,13 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
     paddingHorizontal: spacing.xs,
   },
-  activeTabBadge: {
-    backgroundColor: colors.secondary.default + '30',
-  },
-  tabBadgeText: {
-    fontSize: 11,
-    fontWeight: typography.weights.bold,
-    color: colors.background.card,
-  },
-  activeTabBadgeText: {
-    color: colors.secondary.default,
-  },
+  tabBadgeText: {},
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
   },
-  bookingCard: {
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadow.sm,
-  },
+  bookingCard: { borderRadius: borderRadius.lg, padding: spacing.md },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -314,118 +274,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.status.successBg,
   },
-  statusText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-  },
+  statusText: {},
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    gap: spacing.xs,
   },
-  typeText: {
-    fontSize: typography.sizes.sm,
-    color: colors.secondary.default,
-    marginLeft: spacing.xs,
-    fontFamily: typography.family.medium,
-  },
-  routeInfo: {
-    marginBottom: spacing.md,
-  },
-  routePoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  routeText: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.primary,
-    marginLeft: spacing.sm,
-    flex: 1,
-    fontFamily: typography.family.regular,
-  },
-  routeLine: {
-    width: 1,
-    height: 14,
-    backgroundColor: colors.border.default,
-    marginLeft: 7,
-    marginVertical: spacing.xs,
-  },
+  typeText: {},
+  routeInfo: { marginBottom: spacing.md },
+  routePoint: { flexDirection: 'row', alignItems: 'center' },
+  routeText: { marginLeft: spacing.sm, flex: 1 },
+  routeLine: { width: 1, height: 14, marginLeft: 7, marginVertical: spacing.xs },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  detailText: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
-    marginLeft: spacing.xs,
-    fontFamily: typography.family.regular,
-  },
-  priceText: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.tertiary.default,
-    fontFamily: typography.family.bold,
-  },
+  detailItem: { flexDirection: 'row', alignItems: 'center' },
+  detailText: { marginLeft: spacing.xs },
+  priceText: {},
   cancelButton: {
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.border.default,
     marginTop: spacing.sm,
   },
-  cancelButtonText: {
-    fontSize: typography.sizes.sm,
-    color: colors.status.error,
-    fontWeight: typography.weights.medium,
-    fontFamily: typography.family.medium,
-  },
+  cancelButtonText: {},
   passengerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing.sm,
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.border.default,
+    gap: spacing.xs,
   },
-  separator: {
-    height: spacing.md,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: spacing.xxxl,
-  },
-  emptyText: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
-    marginTop: spacing.md,
-    fontFamily: typography.family.semibold,
-  },
-  emptySubtext: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.muted,
-    marginTop: spacing.xs,
-    textAlign: 'center',
-    fontFamily: typography.family.regular,
-  },
+  separator: { height: spacing.md },
+  emptyState: { paddingVertical: spacing.xxxl },
+  emptyText: { marginTop: spacing.md },
+  emptySubtext: { marginTop: spacing.xs, textAlign: 'center' },
   emptyButton: {
-    backgroundColor: colors.secondary.default,
+    borderRadius: borderRadius.md,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
     marginTop: spacing.lg,
   },
-  emptyButtonText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.semibold,
-  },
+  emptyButtonText: {},
 });

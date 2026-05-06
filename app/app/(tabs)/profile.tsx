@@ -11,12 +11,14 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
-import { colors, borderRadius, typography, spacing, shadow } from '@/theme/colors';
+import { borderRadius, spacing, shadow, colors } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import HeaderMenu from '@/components/HeaderMenu';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { colors, typography } = useTheme();
 
   const mockUser = {
     name: 'Estudiante Unisabana',
@@ -32,129 +34,129 @@ export default function ProfileScreen() {
   const displayName = mockUser.name.split(' ')[0];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
         <View style={styles.headerLeft}>
-          <View style={styles.avatarSmall}>
-            <Text style={styles.avatarText}>{mockUser.name.charAt(0)}</Text>
+          <View style={[styles.avatarSmall, { backgroundColor: colors.secondary.default }]}>
+            <Text style={[styles.avatarText, { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, color: colors.primary.contrast }]}>{mockUser.name.charAt(0)}</Text>
           </View>
-          <Text style={styles.headerBrand}>NEXUS</Text>
+          <Text style={[styles.headerBrand, { fontSize: typography.sizes.xxl, fontWeight: typography.weights.extrabold, fontFamily: typography.family.extrabold, letterSpacing: 2, color: colors.primary.contrast }]}>NEXUS</Text>
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerIconBtn}>
             <Ionicons name="notifications-outline" size={24} color={colors.primary.contrast} />
-            <View style={styles.badge} />
+            <View style={[styles.badge, { backgroundColor: colors.status.error }]} />
           </TouchableOpacity>
           <HeaderMenu />
         </View>
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.profileSection}>
-          <Text style={styles.greeting}>Hola, {displayName}!</Text>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarTextLarge}>{mockUser.name.charAt(0)}</Text>
+        <View style={[styles.profileSection, { backgroundColor: colors.background.card }]}>
+          <Text style={[styles.greeting, { fontSize: typography.sizes.xl, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, color: colors.text.primary }]}>Hola, {displayName}!</Text>
+          <View style={[styles.avatar, { backgroundColor: colors.secondary.default }]}>
+            <Text style={[styles.avatarTextLarge, { fontSize: typography.sizes.xxxl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, color: colors.primary.contrast }]}>{mockUser.name.charAt(0)}</Text>
           </View>
-          <Text style={styles.userName}>{mockUser.name}</Text>
-          <Text style={styles.userFaculty}>{mockUser.faculty}</Text>
-          <View style={styles.statsRow}>
+          <Text style={[styles.userName, { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, color: colors.text.primary }]}>{mockUser.name}</Text>
+          <Text style={[styles.userFaculty, { fontSize: typography.sizes.md, fontFamily: typography.family.regular, color: colors.text.muted }]}>{mockUser.faculty}</Text>
+          <View style={[styles.statsRow, { backgroundColor: colors.background.default, borderRadius: borderRadius.lg }]}>
             <View style={styles.statItem}>
               <Ionicons name="star" size={18} color="#F59E0B" />
-              <Text style={styles.statValue}>{mockUser.rating}</Text>
-              <Text style={styles.statLabel}>Rating</Text>
+              <Text style={[styles.statValue, { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, color: colors.text.primary }]}>{mockUser.rating}</Text>
+              <Text style={[styles.statLabel, { fontSize: typography.sizes.xs, fontFamily: typography.family.regular, color: colors.text.muted }]}>Rating</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border.default }]} />
             <View style={styles.statItem}>
               <Ionicons name="car-sport-outline" size={18} color={colors.secondary.default} />
-              <Text style={styles.statValue}>{mockUser.trips}</Text>
-              <Text style={styles.statLabel}>Viajes</Text>
+              <Text style={[styles.statValue, { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, color: colors.text.primary }]}>{mockUser.trips}</Text>
+              <Text style={[styles.statLabel, { fontSize: typography.sizes.xs, fontFamily: typography.family.regular, color: colors.text.muted }]}>Viajes</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border.default }]} />
             <View style={styles.statItem}>
               <Ionicons name="trophy-outline" size={18} color="#F59E0B" />
-              <Text style={styles.statValue}>{mockUser.sabana_coins}</Text>
-              <Text style={styles.statLabel}>Coins</Text>
+              <Text style={[styles.statValue, { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, color: colors.text.primary }]}>{mockUser.sabana_coins}</Text>
+              <Text style={[styles.statLabel, { fontSize: typography.sizes.xs, fontFamily: typography.family.regular, color: colors.text.muted }]}>Coins</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Información Personal</Text>
-          <View style={styles.card}>
-            <View style={styles.infoRow}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, color: colors.text.primary }]}>Información Personal</Text>
+          <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm }]}>
+            <View style={[styles.infoRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}>
               <Ionicons name="mail-outline" size={20} color={colors.secondary.default} />
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{mockUser.email}</Text>
+              <Text style={[styles.infoLabel, { fontSize: typography.sizes.sm, fontFamily: typography.family.regular, color: colors.text.muted }]}>Email</Text>
+              <Text style={[styles.infoValue, { fontSize: typography.sizes.sm, fontFamily: typography.family.medium, color: colors.text.primary }]}>{mockUser.email}</Text>
             </View>
-            <View style={styles.infoDivider} />
-            <View style={styles.infoRow}>
+            <View style={[styles.infoDivider, { backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
+            <View style={[styles.infoRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}>
               <Ionicons name="call-outline" size={20} color={colors.secondary.default} />
-              <Text style={styles.infoLabel}>Teléfono</Text>
-              <Text style={styles.infoValue}>{mockUser.phone}</Text>
+              <Text style={[styles.infoLabel, { fontSize: typography.sizes.sm, fontFamily: typography.family.regular, color: colors.text.muted }]}>Teléfono</Text>
+              <Text style={[styles.infoValue, { fontSize: typography.sizes.sm, fontFamily: typography.family.medium, color: colors.text.primary }]}>{mockUser.phone}</Text>
             </View>
-            <View style={styles.infoDivider} />
-            <View style={styles.infoRow}>
+            <View style={[styles.infoDivider, { backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
+            <View style={[styles.infoRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}>
               <Ionicons name="business-outline" size={20} color={colors.secondary.default} />
-              <Text style={styles.infoLabel}>Facultad</Text>
-              <Text style={styles.infoValue}>{mockUser.faculty}</Text>
+              <Text style={[styles.infoLabel, { fontSize: typography.sizes.sm, fontFamily: typography.family.regular, color: colors.text.muted }]}>Facultad</Text>
+              <Text style={[styles.infoValue, { fontSize: typography.sizes.sm, fontFamily: typography.family.medium, color: colors.text.primary }]}>{mockUser.faculty}</Text>
             </View>
-            <View style={styles.infoDivider} />
-            <View style={styles.infoRow}>
+            <View style={[styles.infoDivider, { backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
+            <View style={[styles.infoRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}>
               <Ionicons name="calendar-outline" size={20} color={colors.secondary.default} />
-              <Text style={styles.infoLabel}>Miembro desde</Text>
-              <Text style={styles.infoValue}>{mockUser.member_since}</Text>
+              <Text style={[styles.infoLabel, { fontSize: typography.sizes.sm, fontFamily: typography.family.regular, color: colors.text.muted }]}>Miembro desde</Text>
+              <Text style={[styles.infoValue, { fontSize: typography.sizes.sm, fontFamily: typography.family.medium, color: colors.text.primary }]}>{mockUser.member_since}</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Opciones</Text>
-          <View style={styles.card}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, color: colors.text.primary }]}>Opciones</Text>
+          <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm }]}>
             <Link href="/bookings" asChild>
-              <TouchableOpacity style={styles.optionRow}>
+              <TouchableOpacity style={[styles.optionRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}>
                 <View style={styles.optionLeft}>
                   <Ionicons name="car-outline" size={20} color={colors.secondary.default} />
-                  <Text style={styles.optionText}>Mis Viajes</Text>
+                  <Text style={[styles.optionText, { fontSize: typography.sizes.md, fontFamily: typography.family.medium, color: colors.text.primary }]}>Mis Viajes</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
               </TouchableOpacity>
             </Link>
-            <View style={styles.optionDivider} />
+            <View style={[styles.optionDivider, { backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
             <Link href="/payments" asChild>
-              <TouchableOpacity style={styles.optionRow}>
+              <TouchableOpacity style={[styles.optionRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}>
                 <View style={styles.optionLeft}>
                   <Ionicons name="card-outline" size={20} color={colors.secondary.default} />
-                  <Text style={styles.optionText}>Métodos de Pago</Text>
+                  <Text style={[styles.optionText, { fontSize: typography.sizes.md, fontFamily: typography.family.medium, color: colors.text.primary }]}>Métodos de Pago</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
               </TouchableOpacity>
             </Link>
-            <View style={styles.optionDivider} />
+            <View style={[styles.optionDivider, { backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
             <Link href="/notifications" asChild>
-              <TouchableOpacity style={styles.optionRow}>
+              <TouchableOpacity style={[styles.optionRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}>
                 <View style={styles.optionLeft}>
                   <Ionicons name="notifications-outline" size={20} color={colors.secondary.default} />
-                  <Text style={styles.optionText}>Notificaciones</Text>
+                  <Text style={[styles.optionText, { fontSize: typography.sizes.md, fontFamily: typography.family.medium, color: colors.text.primary }]}>Notificaciones</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
               </TouchableOpacity>
             </Link>
-            <View style={styles.optionDivider} />
+            <View style={[styles.optionDivider, { backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
             <Link href="/help" asChild>
-              <TouchableOpacity style={styles.optionRow}>
+              <TouchableOpacity style={[styles.optionRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}>
                 <View style={styles.optionLeft}>
                   <Ionicons name="help-circle-outline" size={20} color={colors.secondary.default} />
-                  <Text style={styles.optionText}>Centro de Ayuda</Text>
+                  <Text style={[styles.optionText, { fontSize: typography.sizes.md, fontFamily: typography.family.medium, color: colors.text.primary }]}>Centro de Ayuda</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
               </TouchableOpacity>
             </Link>
-            <View style={styles.optionDivider} />
+            <View style={[styles.optionDivider, { backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
             <Link href="/settings" asChild>
-              <TouchableOpacity style={styles.optionRow}>
+              <TouchableOpacity style={[styles.optionRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}>
                 <View style={styles.optionLeft}>
                   <Ionicons name="settings-outline" size={20} color={colors.secondary.default} />
-                  <Text style={styles.optionText}>Configuración</Text>
+                  <Text style={[styles.optionText, { fontSize: typography.sizes.md, fontFamily: typography.family.medium, color: colors.text.primary }]}>Configuración</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
               </TouchableOpacity>
@@ -162,9 +164,9 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={[styles.logoutButton, { borderColor: colors.border.error, borderWidth: 1, borderRadius: borderRadius.md, marginHorizontal: spacing.lg, paddingVertical: spacing.md }]}>
           <Ionicons name="log-out-outline" size={20} color={colors.status.error} />
-          <Text style={styles.logoutText}>Cerrar Sesión</Text>
+          <Text style={[styles.logoutText, { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, color: colors.status.error }]}>Cerrar Sesión</Text>
         </TouchableOpacity>
         <View style={{ height: spacing.xxl }} />
       </ScrollView>
@@ -173,211 +175,53 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.lg,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  headerBrand: {
-    fontSize: typography.sizes.xxl,
-    fontWeight: typography.weights.bold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.bold,
-    letterSpacing: 2,
-  },
-  avatarSmall: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.secondary.default,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.bold,
-  },
-  avatarTextLarge: {
-    fontSize: typography.sizes.xxxl,
-    fontWeight: typography.weights.bold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.bold,
-  },
-  headerIconBtn: {
-    padding: spacing.sm,
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 8,
-    height: 8,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.status.error,
-  },
-  content: {
-    flex: 1,
-  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  headerBrand: { letterSpacing: 2 },
+  avatarSmall: { width: 36, height: 36, borderRadius: borderRadius.full, justifyContent: 'center', alignItems: 'center' },
+  avatarText: {},
+  headerIconBtn: { padding: spacing.sm, position: 'relative' },
+  badge: { position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: borderRadius.full },
+  content: { flex: 1 },
   profileSection: {
     alignItems: 'center',
-    backgroundColor: colors.background.card,
     paddingBottom: spacing.lg,
     marginBottom: spacing.md,
   },
-  greeting: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
-    fontFamily: typography.family.semibold,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.secondary.default,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  userName: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-    fontFamily: typography.family.bold,
-  },
-  userFaculty: {
-    fontSize: typography.sizes.md,
-    color: colors.text.muted,
-    marginBottom: spacing.lg,
-    fontFamily: typography.family.regular,
-  },
+  greeting: { marginTop: spacing.lg, marginBottom: spacing.sm },
+  avatar: { width: 90, height: 90, borderRadius: borderRadius.full, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.md },
+  avatarTextLarge: {},
+  userName: {},
+  userFaculty: { marginBottom: spacing.lg },
   statsRow: {
     flexDirection: 'row',
     width: '80%',
-    backgroundColor: colors.background.default,
-    borderRadius: borderRadius.lg,
     padding: spacing.md,
   },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-    marginTop: spacing.xs,
-    fontFamily: typography.family.bold,
-  },
-  statLabel: {
-    fontSize: typography.sizes.xs,
-    color: colors.text.muted,
-    fontFamily: typography.family.regular,
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: colors.border.default,
-  },
-  section: {
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-    fontFamily: typography.family.bold,
-  },
-  card: {
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    ...shadow.sm,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-  },
-  infoLabel: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.muted,
-    marginLeft: spacing.md,
-    width: 70,
-    fontFamily: typography.family.regular,
-  },
-  infoValue: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.primary,
-    flex: 1,
-    fontFamily: typography.family.medium,
-  },
-  infoDivider: {
-    height: 1,
-    backgroundColor: colors.border.default,
-    marginHorizontal: spacing.md,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-  },
-  optionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  optionText: {
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    marginLeft: spacing.md,
-    fontFamily: typography.family.medium,
-  },
-  optionDivider: {
-    height: 1,
-    backgroundColor: colors.border.default,
-    marginHorizontal: spacing.md,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border.error,
-  },
-  logoutText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.status.error,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.semibold,
-  },
+  statItem: { flex: 1, alignItems: 'center' },
+  statValue: { marginTop: spacing.xs },
+  statLabel: {},
+  statDivider: { width: 1 },
+  section: { marginBottom: spacing.md },
+  sectionTitle: { marginBottom: spacing.sm },
+  card: { borderRadius: borderRadius.lg },
+  infoRow: { flexDirection: 'row', alignItems: 'center' },
+  infoLabel: { marginLeft: spacing.md, width: 70 },
+  infoValue: { flex: 1 },
+  infoDivider: { height: 1 },
+  optionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  optionLeft: { flexDirection: 'row', alignItems: 'center' },
+  optionText: { marginLeft: spacing.md },
+  optionDivider: { height: 1 },
+  logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  logoutText: { marginLeft: spacing.sm },
 });

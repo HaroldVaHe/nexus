@@ -12,12 +12,16 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { colors, borderRadius, typography, spacing, shadow } from '@/theme/colors';
+import { borderRadius, spacing, shadow } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useSettings } from '@/context/SettingsContext';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function TripDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { t } = useSettings();
+  const { colors, typography } = useTheme();
 
   const trip = {
     id: id as string,
@@ -42,14 +46,14 @@ export default function TripDetailScreen() {
 
   const handleBook = () => {
     Alert.alert(
-      'Confirmar Reserva',
-      `¿Deseas reservar un asiento en este viaje por $${trip.price.toLocaleString('es-CO')}?`,
+      t.trip.confirmBooking,
+      t.trip.confirmBookingMsg.replace('${price}', `$${trip.price.toLocaleString('es-CO')}`),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         {
-          text: 'Confirmar',
+          text: t.common.confirm,
           onPress: () => {
-            Alert.alert('Éxito', 'Tu reserva ha sido creada exitosamente');
+            Alert.alert(t.common.success, t.trip.bookingSuccess);
             router.replace('/bookings');
           },
         },
@@ -62,49 +66,49 @@ export default function TripDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalle del Viaje</Text>
+        <Text style={[styles.headerTitle, { color: colors.primary.contrast, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.trip.title}</Text>
         <TouchableOpacity onPress={handleReport} style={styles.backButton}>
           <Ionicons name="flag-outline" size={20} color={colors.primary.contrast} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.driverSection}>
-          <View style={styles.driverAvatar}>
-            <Text style={styles.avatarText}>{trip.driver_name.charAt(0)}</Text>
+        <View style={[styles.driverSection, { backgroundColor: colors.background.card }]}>
+          <View style={[styles.driverAvatar, { backgroundColor: colors.secondary.default }]}>
+            <Text style={[styles.avatarText, { color: colors.primary.contrast, fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{trip.driver_name.charAt(0)}</Text>
           </View>
           <View style={styles.driverInfo}>
-            <Text style={styles.driverName}>{trip.driver_name}</Text>
-            <Text style={styles.driverFaculty}>{trip.driver_faculty}</Text>
+            <Text style={[styles.driverName, { color: colors.text.primary, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{trip.driver_name}</Text>
+            <Text style={[styles.driverFaculty, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{trip.driver_faculty}</Text>
             <View style={styles.driverStats}>
-              <View style={styles.statBadge}>
+              <View style={[styles.statBadge, { backgroundColor: '#FEF3C7' }]}>
                 <Ionicons name="star" size={14} color="#F59E0B" />
-                <Text style={styles.statText}>{trip.driver_rating}</Text>
+                <Text style={[styles.statText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.medium }]}>{trip.driver_rating}</Text>
               </View>
-              <Text style={styles.statText}>
-                {trip.driver_trips} viajes
-              </Text>
+<Text style={[styles.statText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.medium }]}>
+               {trip.driver_trips} {t.trip.trips}
+             </Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ruta</Text>
-          <View style={styles.routeCard}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.trip.route}</Text>
+          <View style={[styles.routeCard, { backgroundColor: colors.background.card, ...shadow.sm }]}>
             <View style={styles.routePoint}>
               <View style={styles.dotContainer}>
                 <View style={[styles.dot, { backgroundColor: colors.tertiary.default }]} />
-                {true && <View style={styles.dottedLine} />}
+                {true && <View style={[styles.dottedLine, { backgroundColor: colors.border.default }]} />}
               </View>
               <View style={styles.routeDetails}>
-                <Text style={styles.routeLabel}>Origen</Text>
-                <Text style={styles.routeName}>{trip.origin}</Text>
-                <Text style={styles.routeSubtext}>{trip.origin_detail}</Text>
+                <Text style={[styles.routeLabel, { color: colors.text.muted, fontSize: typography.sizes.xs, fontWeight: typography.weights.medium, fontFamily: typography.family.medium, textTransform: 'uppercase', letterSpacing: 0.5 }]}>{t.trip.origin}</Text>
+                <Text style={[styles.routeName, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{trip.origin}</Text>
+                <Text style={[styles.routeSubtext, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{trip.origin_detail}</Text>
               </View>
             </View>
             <View style={styles.routePoint}>
@@ -112,51 +116,51 @@ export default function TripDetailScreen() {
                 <View style={[styles.dot, { backgroundColor: colors.secondary.default }]} />
               </View>
               <View style={styles.routeDetails}>
-                <Text style={styles.routeLabel}>Destino</Text>
-                <Text style={styles.routeName}>{trip.destination}</Text>
-                <Text style={styles.routeSubtext}>{trip.destination_detail}</Text>
+                <Text style={[styles.routeLabel, { color: colors.text.muted, fontSize: typography.sizes.xs, fontWeight: typography.weights.medium, fontFamily: typography.family.medium, textTransform: 'uppercase', letterSpacing: 0.5 }]}>{t.trip.destination}</Text>
+                <Text style={[styles.routeName, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{trip.destination}</Text>
+                <Text style={[styles.routeSubtext, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{trip.destination_detail}</Text>
               </View>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Horario</Text>
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.trip.schedule}</Text>
+          <View style={[styles.infoCard, { backgroundColor: colors.background.card, ...shadow.sm }]}>
+            <View style={[styles.infoRow, { paddingVertical: spacing.sm, paddingHorizontal: spacing.md }]}>
               <Ionicons name="calendar-outline" size={20} color={colors.secondary.default} />
-              <Text style={styles.infoLabel}>Fecha</Text>
-              <Text style={styles.infoValue}>{trip.date}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text.muted, marginLeft: spacing.md, width: 80, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.trip.date}</Text>
+              <Text style={[styles.infoValue, { color: colors.text.primary, flex: 1, fontSize: typography.sizes.sm, fontFamily: typography.family.medium }]}>{trip.date}</Text>
             </View>
-            <View style={styles.infoDivider} />
-            <View style={styles.infoRow}>
+            <View style={[styles.infoDivider, { backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
+            <View style={[styles.infoRow, { paddingVertical: spacing.sm, paddingHorizontal: spacing.md }]}>
               <Ionicons name="time-outline" size={20} color={colors.secondary.default} />
-              <Text style={styles.infoLabel}>Horario</Text>
-              <Text style={styles.infoValue}>{trip.departure_time} - {trip.arrival_time}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text.muted, marginLeft: spacing.md, width: 80, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.trip.time}</Text>
+              <Text style={[styles.infoValue, { color: colors.text.primary, flex: 1, fontSize: typography.sizes.sm, fontFamily: typography.family.medium }]}>{trip.departure_time} - {trip.arrival_time}</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vehículo</Text>
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.trip.vehicle}</Text>
+          <View style={[styles.infoCard, { backgroundColor: colors.background.card, ...shadow.sm }]}>
+            <View style={[styles.infoRow, { paddingVertical: spacing.sm, paddingHorizontal: spacing.md }]}>
               <Ionicons name="car-sport-outline" size={20} color={colors.secondary.default} />
-              <Text style={styles.infoLabel}>Vehículo</Text>
-              <Text style={styles.infoValue}>{trip.vehicle}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text.muted, marginLeft: spacing.md, width: 80, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.trip.vehicle}</Text>
+              <Text style={[styles.infoValue, { color: colors.text.primary, flex: 1, fontSize: typography.sizes.sm, fontFamily: typography.family.medium }]}>{trip.vehicle}</Text>
             </View>
-            <View style={styles.infoDivider} />
-            <View style={styles.infoRow}>
+            <View style={[styles.infoDivider, { backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
+            <View style={[styles.infoRow, { paddingVertical: spacing.sm, paddingHorizontal: spacing.md }]}>
               <Ionicons name="information-circle-outline" size={20} color={colors.secondary.default} />
-              <Text style={styles.infoLabel}>Placa</Text>
-              <Text style={styles.infoValue}>{trip.plate}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text.muted, marginLeft: spacing.md, width: 80, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.trip.plate}</Text>
+              <Text style={[styles.infoValue, { color: colors.text.primary, flex: 1, fontSize: typography.sizes.sm, fontFamily: typography.family.medium }]}>{trip.plate}</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Asientos Disponibles</Text>
-          <View style={styles.seatsContainer}>
+        <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.trip.availableSeats}</Text>
+          <View style={[styles.seatsContainer, { backgroundColor: colors.background.card, ...shadow.sm, gap: spacing.sm }]}>
             {[...Array(trip.total_seats)].map((_, i) => (
               <Ionicons
                 key={i}
@@ -165,30 +169,30 @@ export default function TripDetailScreen() {
                 color={i < trip.available_seats ? colors.tertiary.default : colors.text.muted}
               />
             ))}
-            <Text style={styles.seatsText}>
-              {trip.available_seats} de {trip.total_seats} disponibles
-            </Text>
+<Text style={[styles.seatsText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.medium }]}>
+               {trip.available_seats} {t.trip.availableOf} {trip.total_seats} {t.trip.available}
+             </Text>
           </View>
         </View>
 
         {trip.notes && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Notas del Conductor</Text>
-            <View style={styles.notesCard}>
+          <View style={[styles.section, { paddingHorizontal: spacing.lg }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{t.trip.driverNotes}</Text>
+            <View style={[styles.notesCard, { backgroundColor: colors.background.card, ...shadow.sm }]}>
               <Ionicons name="document-text-outline" size={20} color={colors.text.secondary} />
-              <Text style={styles.notesText}>{trip.notes}</Text>
+              <Text style={[styles.notesText, { color: colors.text.secondary, marginLeft: spacing.sm, flex: 1, fontSize: typography.sizes.sm, fontFamily: typography.family.regular, lineHeight: typography.sizes.sm * typography.lineHeight.normal }]}>{trip.notes}</Text>
             </View>
           </View>
         )}
 
-        <View style={styles.bookingSection}>
+        <View style={[styles.bookingSection, { backgroundColor: colors.background.card, borderTopColor: colors.border.default }]}>
           <View style={styles.priceContainer}>
-            <Text style={styles.priceLabel}>Precio por persona</Text>
-            <Text style={styles.priceValue}>${trip.price.toLocaleString('es-CO')}</Text>
+            <Text style={[styles.priceLabel, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{t.trip.pricePerPerson}</Text>
+            <Text style={[styles.priceValue, { color: colors.tertiary.default, fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>${trip.price.toLocaleString('es-CO')}</Text>
           </View>
-          <TouchableOpacity style={styles.bookButton} onPress={handleBook}>
+          <TouchableOpacity style={[styles.bookButton, { backgroundColor: colors.secondary.default }]} onPress={handleBook}>
             <Ionicons name="checkmark-circle-outline" size={22} color={colors.primary.contrast} />
-            <Text style={styles.bookButtonText}>Reservar Ahora</Text>
+            <Text style={[styles.bookButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.trip.bookNow}</Text>
           </TouchableOpacity>
         </View>
         <View style={{ height: spacing.xxl }} />
@@ -198,241 +202,62 @@ export default function TripDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.md,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
-  backButton: {
-    padding: spacing.xs,
-  },
-  headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.semibold,
-  },
-  content: {
-    flex: 1,
-  },
+  backButton: { padding: spacing.xs },
+  headerTitle: {},
+  content: { flex: 1 },
   driverSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.card,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
-  driverAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.secondary.default,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  avatarText: {
-    fontSize: typography.sizes.xxl,
-    fontWeight: typography.weights.bold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.bold,
-  },
-  driverInfo: {
-    flex: 1,
-  },
-  driverName: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-    fontFamily: typography.family.bold,
-  },
-  driverFaculty: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.muted,
-    fontFamily: typography.family.regular,
-  },
-  driverStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.xs,
-  },
-  statBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    marginRight: spacing.sm,
-  },
-  statText: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
-    marginLeft: spacing.xs,
-    fontFamily: typography.family.medium,
-  },
-  section: {
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-    fontFamily: typography.family.bold,
-  },
-  routeCard: {
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadow.sm,
-  },
-  routePoint: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  dotContainer: {
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: borderRadius.full,
-  },
-  dottedLine: {
-    width: 2,
-    height: 30,
-    backgroundColor: colors.border.default,
-    borderStyle: 'dashed',
-  },
-  routeDetails: {
-    flex: 1,
-  },
-  routeLabel: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.medium,
-    color: colors.text.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontFamily: typography.family.medium,
-  },
-  routeName: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
-    fontFamily: typography.family.semibold,
-  },
-  routeSubtext: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
-    marginTop: 2,
-    fontFamily: typography.family.regular,
-  },
-  infoCard: {
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadow.sm,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  infoLabel: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.muted,
-    marginLeft: spacing.md,
-    width: 80,
-    fontFamily: typography.family.regular,
-  },
-  infoValue: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.primary,
-    flex: 1,
-    fontFamily: typography.family.medium,
-  },
-  infoDivider: {
-    height: 1,
-    backgroundColor: colors.border.default,
-  },
-  seatsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    gap: spacing.sm,
-    ...shadow.sm,
-  },
-  seatsText: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.medium,
-  },
-  notesCard: {
-    flexDirection: 'row',
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadow.sm,
-  },
-  notesText: {
-    flex: 1,
-    fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.regular,
-    lineHeight: typography.sizes.sm * typography.lineHeight.normal,
-  },
+  driverAvatar: { width: 60, height: 60, borderRadius: borderRadius.full, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
+  avatarText: {},
+  driverInfo: { flex: 1 },
+  driverName: {},
+  driverFaculty: { marginTop: 2 },
+  driverStats: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs, gap: spacing.sm },
+  statBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: borderRadius.sm, marginRight: spacing.sm },
+  statText: { marginLeft: spacing.xs },
+  section: { marginBottom: spacing.md },
+  sectionTitle: { marginBottom: spacing.sm },
+  routeCard: { borderRadius: borderRadius.lg, padding: spacing.md },
+  routePoint: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.md },
+  dotContainer: { alignItems: 'center', marginRight: spacing.md },
+  dot: { width: 12, height: 12, borderRadius: borderRadius.full },
+  dottedLine: { width: 2, height: 30, borderStyle: 'dashed' },
+  routeDetails: { flex: 1 },
+  routeLabel: {},
+  routeName: {},
+  routeSubtext: { marginTop: 2 },
+  infoCard: { borderRadius: borderRadius.lg, padding: spacing.md },
+  infoRow: { flexDirection: 'row', alignItems: 'center' },
+  infoLabel: {},
+  infoValue: {},
+  infoDivider: { height: 1 },
+  seatsContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: borderRadius.lg, padding: spacing.md },
+  seatsText: { marginLeft: spacing.sm },
+  notesCard: { flexDirection: 'row', borderRadius: borderRadius.lg, padding: spacing.md },
+  notesText: {},
   bookingSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.background.card,
     padding: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: colors.border.default,
   },
-  priceContainer: {
-    flex: 1,
-  },
-  priceLabel: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.muted,
-    fontFamily: typography.family.regular,
-  },
-  priceValue: {
-    fontSize: typography.sizes.xxl,
-    fontWeight: typography.weights.bold,
-    color: colors.tertiary.default,
-    fontFamily: typography.family.bold,
-  },
-  bookButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.secondary.default,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-  },
-  bookButtonText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.semibold,
-  },
+  priceContainer: { flex: 1 },
+  priceLabel: {},
+  priceValue: {},
+  bookButton: { flexDirection: 'row', alignItems: 'center', borderRadius: borderRadius.md, paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
+  bookButtonText: { marginLeft: spacing.sm },
 });

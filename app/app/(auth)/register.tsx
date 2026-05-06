@@ -13,16 +13,20 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LoginButton } from '@/components/LoginButton';
-import { colors, borderRadius, typography, spacing } from '@/theme/colors';
+import { borderRadius, spacing, colors } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { validateInstitutionalEmail } from '@/utils/config';
 import { apiClient } from '@/api/auth';
 import { useAuth } from '@/context/AuthContext';
+import { useSettings } from '@/context/SettingsContext';
 import { showAlert } from '@/utils/alert';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useSettings();
+  const { colors, typography } = useTheme();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -39,27 +43,27 @@ export default function RegisterScreen() {
     const newErrors: Record<string, string> = {};
 
     if (!fullName.trim()) {
-      newErrors.fullName = 'Nombre completo requerido';
+      newErrors.fullName = t.register.nameRequired;
     }
 
     if (!email.trim()) {
-      newErrors.email = 'Email requerido';
+      newErrors.email = t.common.emailRequired;
     } else if (!validateInstitutionalEmail(email)) {
-      newErrors.email = 'Usa tu correo @unisabana.edu.co';
+      newErrors.email = t.common.useInstitutionalEmail;
     }
 
     if (!password) {
-      newErrors.password = 'Contraseña requerida';
+      newErrors.password = t.common.passwordRequired;
     } else if (password.length < 8) {
-      newErrors.password = 'Mínimo 8 caracteres';
+      newErrors.password = t.register.minChars;
     }
 
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden';
+      newErrors.confirmPassword = t.register.passwordsDontMatch;
     }
 
     if (selectedRoles.length === 0) {
-      newErrors.roles = 'Selecciona al menos un rol';
+      newErrors.roles = t.register.selectRole;
     }
 
     setErrors(newErrors);
@@ -82,13 +86,13 @@ export default function RegisterScreen() {
 
       await login(response);
       showAlert(
-        'Registro exitoso',
-        'Tu cuenta ha sido creada correctamente',
+        t.register.successTitle,
+        t.register.successMessage,
         [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]
       );
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Error en el registro';
-      showAlert('Error', message.includes('already exists') ? 'Este correo ya está registrado' : message);
+      const message = error instanceof Error ? error.message : t.register.error;
+      showAlert(t.common.error, message.includes('already exists') ? t.register.emailExists : message);
     } finally {
       setLoading(false);
     }
@@ -98,7 +102,6 @@ export default function RegisterScreen() {
     label: string,
     value: string,
     onChangeText: (text: string) => void,
-    error?: string,
     options: {
       placeholder: string;
       keyboardType?: 'email-address' | 'phone-pad' | 'default';
@@ -107,15 +110,16 @@ export default function RegisterScreen() {
       showPassword?: boolean;
       onTogglePassword?: () => void;
       icon: string;
-    }
+    },
+    error?: string,
   ) => (
     <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.inputWrapper}>
-        <Text style={styles.inputIcon}>{options.icon}</Text>
+      <Text style={[styles.label, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{label}</Text>
+      <View style={[styles.inputWrapper, { backgroundColor: colors.background.card, borderColor: colors.border.default }]}>
+        <Text style={[styles.inputIcon, { fontSize: typography.sizes.md }]}>{options.icon}</Text>
         <View style={styles.textInputContainer}>
-          <TextInput
-            style={[styles.input, error && styles.inputError]}
+            <TextInput
+              style={[styles.input, { color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }, !!error && { borderColor: colors.border.error }]}
             placeholder={options.placeholder}
             placeholderTextColor={colors.text.muted}
             value={value}
@@ -130,25 +134,25 @@ export default function RegisterScreen() {
               style={styles.eyeButton}
               onPress={options.onTogglePassword}
             >
-              <Text style={styles.eyeButtonText}>
+              <Text style={[styles.eyeButtonText, { fontSize: typography.sizes.md }]}>
                 {options.showPassword ? '🙈' : '👁'}
               </Text>
             </TouchableOpacity>
           )}
         </View>
       </View>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+       {error ? <Text style={[styles.errorText, { color: colors.status.error, fontSize: typography.sizes.xs, fontFamily: typography.family.medium }]}>{error}</Text> : null}
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary.dark} />
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
+          <Text style={[styles.backButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.xl }]}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Crear Cuenta</Text>
+        <Text style={[styles.headerTitle, { color: colors.primary.contrast, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.register.title}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -160,35 +164,36 @@ export default function RegisterScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.form}>
-            {renderInput('Nombre Completo', fullName, setFullName, errors.fullName, {
-              placeholder: 'Tu nombre completo',
+          <View style={[styles.form, { paddingHorizontal: spacing.lg }]}>
+            {renderInput(t.register.fullName, fullName, setFullName, {
+              placeholder: t.register.fullNamePlaceholder,
               icon: '👤',
-            })}
+            }, errors.fullName)}
 
-            {renderInput('Correo Institucional', email, setEmail, errors.email, {
-              placeholder: 'usuario@unisabana.edu.co',
+            {renderInput(t.register.institutionalEmail, email, setEmail, {
+              placeholder: t.app.domain,
               keyboardType: 'email-address',
               icon: '📧',
-            })}
+            }, errors.email)}
 
-            {renderInput('Teléfono', phone, setPhone, errors.phone, {
-              placeholder: '+57 300 123 4567',
+            {renderInput(t.register.phone, phone, setPhone, {
+              placeholder: t.register.phonePlaceholder,
               keyboardType: 'phone-pad',
               icon: '📱',
-            })}
+            }, errors.phone)}
 
-            {renderInput('Facultad', faculty, setFaculty, errors.faculty, {
-              placeholder: 'Ej: Ingeniería',
+            {renderInput(t.register.faculty, faculty, setFaculty, {
+              placeholder: t.register.facultyPlaceholder,
               icon: '🏛',
-            })}
+            }, errors.faculty)}
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>¿Cómo usarás Nexus?</Text>
-              <Text style={styles.roleSubtext}>Selecciona al menos una opción</Text>
-              <View style={styles.roleContainer}>
+               <Text style={[styles.label, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.register.howToUse}</Text>
+              <Text style={[styles.roleSubtext, { color: colors.text.muted, fontSize: typography.sizes.xs, fontFamily: typography.family.regular }]}>{t.register.roleSubtext}</Text>
+              <View style={[styles.roleContainer, { gap: spacing.sm }]}>
                 <TouchableOpacity
-                  style={[styles.roleChip, selectedRoles.includes('passenger') && styles.roleChipSelected]}
+                  style={[styles.roleChip, { borderColor: colors.border.default, backgroundColor: colors.background.card },
+                    selectedRoles.includes('passenger') && { backgroundColor: colors.secondary.default, borderColor: colors.secondary.default }]}
                   onPress={() => {
                     if (selectedRoles.includes('passenger')) {
                       setSelectedRoles(selectedRoles.filter(r => r !== 'passenger'));
@@ -202,12 +207,14 @@ export default function RegisterScreen() {
                     size={18}
                     color={selectedRoles.includes('passenger') ? colors.primary.contrast : colors.text.secondary}
                   />
-                  <Text style={[styles.roleText, selectedRoles.includes('passenger') && styles.roleTextSelected]}>
-                    Pasajero
+                  <Text style={[styles.roleText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontFamily: typography.family.medium },
+                    selectedRoles.includes('passenger') && { color: colors.primary.contrast, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>
+                    {t.register.passenger}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.roleChip, selectedRoles.includes('driver') && styles.roleChipSelected]}
+                  style={[styles.roleChip, { borderColor: colors.border.default, backgroundColor: colors.background.card },
+                    selectedRoles.includes('driver') && { backgroundColor: colors.secondary.default, borderColor: colors.secondary.default }]}
                   onPress={() => {
                     if (selectedRoles.includes('driver')) {
                       setSelectedRoles(selectedRoles.filter(r => r !== 'driver'));
@@ -221,47 +228,48 @@ export default function RegisterScreen() {
                     size={18}
                     color={selectedRoles.includes('driver') ? colors.primary.contrast : colors.text.secondary}
                   />
-                  <Text style={[styles.roleText, selectedRoles.includes('driver') && styles.roleTextSelected]}>
-                    Conductor
+                  <Text style={[styles.roleText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontFamily: typography.family.medium },
+                    selectedRoles.includes('driver') && { color: colors.primary.contrast, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>
+                    {t.register.driver}
                   </Text>
                 </TouchableOpacity>
               </View>
-              {errors.roles ? <Text style={styles.errorText}>{errors.roles}</Text> : null}
+               {errors.roles ? <Text style={[styles.errorText, { color: colors.status.error, fontSize: typography.sizes.xs, fontFamily: typography.family.medium }]}>{errors.roles}</Text> : null}
             </View>
 
-            {renderInput('Contraseña', password, setPassword, errors.password, {
-              placeholder: 'Mínimo 8 caracteres',
+            {renderInput(t.register.password, password, setPassword, {
+              placeholder: t.register.passwordPlaceholder,
               secureTextEntry: !showPassword,
               showPasswordToggle: true,
               showPassword,
               onTogglePassword: () => setShowPassword(!showPassword),
               icon: '🔒',
-            })}
+            }, errors.password)}
 
             {renderInput(
-              'Confirmar Contraseña',
+              t.register.confirmPassword,
               confirmPassword,
               setConfirmPassword,
-              errors.confirmPassword,
               {
-                placeholder: 'Repite tu contraseña',
+                placeholder: t.register.confirmPasswordPlaceholder,
                 secureTextEntry: !showConfirmPassword,
                 showPasswordToggle: true,
                 showPassword: showConfirmPassword,
                 onTogglePassword: () => setShowConfirmPassword(!showConfirmPassword),
                 icon: '🔒',
-              }
+              },
+              errors.confirmPassword
             )}
 
             <View style={styles.termsContainer}>
-              <Text style={styles.termsIcon}>ℹ️</Text>
-              <Text style={styles.termsText}>
-                Al registrarte aceptas los términos y condiciones de uso de Nexus.
-              </Text>
+              <Text style={[styles.termsIcon, { fontSize: typography.sizes.md }]}>ℹ️</Text>
+               <Text style={[styles.termsText, { color: colors.text.muted, fontSize: typography.sizes.xs, fontFamily: typography.family.regular }]}>
+                 {t.register.terms}
+               </Text>
             </View>
 
             <LoginButton
-              title="Crear Cuenta"
+              title={t.register.createAccount}
               onPress={handleRegister}
               loading={loading}
               variant="primary"
@@ -275,66 +283,36 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.md,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
-  backButton: {
-    padding: spacing.xs,
-  },
-  backButtonText: {
-    fontSize: typography.sizes.xl,
-    color: colors.primary.contrast,
-  },
-  headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.semibold,
-  },
-  keyboardView: {
-    flex: 1,
-  },
+  backButton: { padding: spacing.xs },
+  backButtonText: { color: colors.primary.contrast },
+  headerTitle: {},
+  keyboardView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
   },
-  form: {
-    width: '100%',
-  },
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-    fontFamily: typography.family.semibold,
-  },
+  form: { width: '100%' },
+  inputGroup: { marginBottom: spacing.md },
+  label: { marginBottom: spacing.sm },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.card,
     borderWidth: 1,
-    borderColor: colors.border.default,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
   },
-  inputIcon: {
-    fontSize: typography.sizes.md,
-  },
+  inputIcon: { marginRight: spacing.sm },
   textInputContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -345,38 +323,20 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
     paddingRight: spacing.xl,
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    fontFamily: typography.family.regular,
   },
-  inputError: {
-    borderColor: colors.border.error,
-  },
+  inputError: { borderColor: '#FCA5A5' },
   eyeButton: {
     position: 'absolute',
     right: spacing.sm,
     padding: spacing.xs,
   },
-  eyeButtonText: {
-    fontSize: typography.sizes.md,
-  },
+  eyeButtonText: {},
   errorText: {
-    fontSize: typography.sizes.xs,
-    color: colors.status.error,
     marginTop: spacing.xs,
     marginLeft: spacing.xs,
-    fontFamily: typography.family.medium,
   },
-  roleSubtext: {
-    fontSize: typography.sizes.xs,
-    color: colors.text.muted,
-    marginBottom: spacing.sm,
-    fontFamily: typography.family.regular,
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
+  roleSubtext: { marginBottom: spacing.sm },
+  roleContainer: { flexDirection: 'row' },
   roleChip: {
     flex: 1,
     flexDirection: 'row',
@@ -386,41 +346,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border.default,
-    backgroundColor: colors.background.card,
     gap: spacing.xs,
   },
-  roleChipSelected: {
-    backgroundColor: colors.secondary.default,
-    borderColor: colors.secondary.default,
-  },
-  roleText: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-    color: colors.text.secondary,
-    fontFamily: typography.family.medium,
-  },
-  roleTextSelected: {
-    color: colors.primary.contrast,
-    fontWeight: typography.weights.semibold,
-  },
+  roleText: {},
   termsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.lg,
     marginTop: spacing.sm,
   },
-  termsIcon: {
-    fontSize: typography.sizes.md,
-    marginRight: spacing.sm,
-  },
-  termsText: {
-    fontSize: typography.sizes.xs,
-    color: colors.text.muted,
-    flex: 1,
-    fontFamily: typography.family.regular,
-  },
-  button: {
-    marginTop: spacing.sm,
-  },
+  termsIcon: { marginRight: spacing.sm },
+  termsText: { flex: 1 },
+  button: { marginTop: spacing.sm },
 });

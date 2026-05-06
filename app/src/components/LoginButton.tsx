@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { colors, borderRadius, typography, spacing } from '@/theme/colors';
+import { useTheme } from '@/hooks/useTheme';
 
 interface LoginButtonProps {
   title: string;
@@ -25,6 +26,8 @@ export const LoginButton: React.FC<LoginButtonProps> = ({
   variant = 'primary',
   style,
 }) => {
+  const { colors, borderRadius, typography, spacing } = useTheme();
+
   const getVariantStyles = (): ViewStyle => {
     switch (variant) {
       case 'microsoft':

@@ -13,11 +13,17 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, borderRadius, typography, spacing, shadow } from '@/theme/colors';
+import { borderRadius, spacing, shadow, colors } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useSettings } from '@/context/SettingsContext';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function AddCardScreen() {
   const router = useRouter();
+  const { t } = useSettings();
+  const { colors, typography } = useTheme();
+  const a = t.addCard;
+
   const [cardNumber, setCardNumber] = useState('');
   const [cardHolder, setCardHolder] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -49,49 +55,51 @@ export default function AddCardScreen() {
   const handleSave = () => {
     const cleaned = cardNumber.replace(/\s/g, '');
     if (cleaned.length < 16 || !cardHolder || expiry.length < 5 || cvv.length < 3) {
-      Alert.alert('Error', 'Por favor completa todos los campos correctamente');
+      Alert.alert(a.error, a.fillAllFields);
       return;
     }
 
     Alert.alert(
-      'Tarjeta Guardada',
-      'Tu tarjeta ha sido agregada exitosamente',
-      [{ text: 'OK', onPress: () => router.back() }]
+      a.cardSaved,
+      a.cardSavedMsg,
+      [{ text: t.common.ok, onPress: () => router.back() }]
     );
   };
 
   const cardBrand = detectCardType(cardNumber);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary.default} />
+
+      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Agregar Tarjeta</Text>
+        <Text style={[styles.headerTitle, { color: colors.primary.contrast, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{a.title}</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.cardPreview}>
-          <View style={[styles.previewInner, cardType === 'credit' ? styles.creditCard : styles.debitCard]}>
-            <View style={styles.previewTop}>
-              <Text style={styles.previewChip}>CHIP</Text>
-              {cardBrand && <Text style={styles.previewBrand}>{cardBrand}</Text>}
+        <View style={[styles.cardPreview, { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.md }]}>
+          <View style={[styles.previewInner, cardType === 'credit' && { backgroundColor: colors.primary.default }, cardType === 'debit' && { backgroundColor: colors.tertiary.default }]}>
+            <View style={[styles.previewTop, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+              <Text style={[styles.previewChip, { fontSize: typography.sizes.xs, color: colors.primary.contrast + '80', fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>{a.chip}</Text>
+              {cardBrand && <Text style={[styles.previewBrand, { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.primary.contrast, fontFamily: typography.family.bold }]}>{cardBrand}</Text>}
             </View>
-            <Text style={styles.previewNumber}>
+            <Text style={[styles.previewNumber, { fontSize: typography.sizes.xl, color: colors.primary.contrast, letterSpacing: 2, fontFamily: typography.family.medium }]}>
               {cardNumber || '**** **** **** ****'}
             </Text>
-            <View style={styles.previewBottom}>
+            <View style={[styles.previewBottom, { flexDirection: 'row', justifyContent: 'space-between' }]}>
               <View>
-                <Text style={styles.previewLabel}>Titular</Text>
-                <Text style={styles.previewValue}>
+                <Text style={[styles.previewLabel, { fontSize: typography.sizes.xs, color: colors.primary.contrast + '80', fontFamily: typography.family.regular }]}>{a.holder}</Text>
+                <Text style={[styles.previewValue, { fontSize: typography.sizes.md, color: colors.primary.contrast, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>
                   {cardHolder || 'TU NOMBRE'}
                 </Text>
               </View>
               <View>
-                <Text style={styles.previewLabel}>Vence</Text>
-                <Text style={styles.previewValue}>
+                <Text style={[styles.previewLabel, { fontSize: typography.sizes.xs, color: colors.primary.contrast + '80', fontFamily: typography.family.regular }]}>{a.expires}</Text>
+                <Text style={[styles.previewValue, { fontSize: typography.sizes.md, color: colors.primary.contrast, fontWeight: typography.weights.medium, fontFamily: typography.family.medium }]}>
                   {expiry || 'MM/YY'}
                 </Text>
               </View>
@@ -99,9 +107,10 @@ export default function AddCardScreen() {
           </View>
         </View>
 
-        <View style={styles.typeToggle}>
+        <View style={[styles.typeToggle, { flexDirection: 'row', paddingHorizontal: spacing.lg, marginBottom: spacing.md, gap: spacing.md }]}>
           <TouchableOpacity
-            style={[styles.typeBtn, cardType === 'credit' && styles.typeBtnActive]}
+            style={[styles.typeBtn, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.md, borderRadius: borderRadius.md, backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.border.default },
+              cardType === 'credit' && { backgroundColor: colors.secondary.default, borderColor: colors.secondary.default }]}
             onPress={() => setCardType('credit')}
           >
             <Ionicons
@@ -109,13 +118,12 @@ export default function AddCardScreen() {
               size={18}
               color={cardType === 'credit' ? colors.primary.contrast : colors.text.secondary}
             />
-            <Text style={[
-              styles.typeText,
-              cardType === 'credit' && styles.typeTextActive
-            ]}>Crédito</Text>
+            <Text style={[styles.typeText, { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontFamily: typography.family.medium, marginLeft: spacing.sm },
+              cardType === 'credit' && { color: colors.primary.contrast }]}>{a.credit}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.typeBtn, cardType === 'debit' && styles.typeBtnActive]}
+            style={[styles.typeBtn, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.md, borderRadius: borderRadius.md, backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.border.default },
+              cardType === 'debit' && { backgroundColor: colors.secondary.default, borderColor: colors.secondary.default }]}
             onPress={() => setCardType('debit')}
           >
             <Ionicons
@@ -123,21 +131,19 @@ export default function AddCardScreen() {
               size={18}
               color={cardType === 'debit' ? colors.primary.contrast : colors.text.secondary}
             />
-            <Text style={[
-              styles.typeText,
-              cardType === 'debit' && styles.typeTextActive
-            ]}>Débito</Text>
+            <Text style={[styles.typeText, { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontFamily: typography.family.medium, marginLeft: spacing.sm },
+              cardType === 'debit' && { color: colors.primary.contrast }]}>{a.debit}</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Número de Tarjeta *</Text>
-            <View style={styles.inputWrapper}>
+        <View style={[styles.form, { paddingHorizontal: spacing.lg }]}>
+          <View style={[styles.inputGroup, { marginBottom: spacing.md }]}>
+            <Text style={[styles.label, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, marginBottom: spacing.sm }]}>{a.cardNumber} *</Text>
+            <View style={[styles.inputWrapper, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.border.default, borderRadius: borderRadius.md, paddingHorizontal: spacing.md }]}>
               <Ionicons name="card-outline" size={20} color={colors.text.muted} />
               <TextInput
-                style={styles.input}
-                placeholder="1234 5678 9012 3456"
+                style={[styles.input, { flex: 1, paddingVertical: spacing.md, marginLeft: spacing.sm, fontSize: typography.sizes.md, color: colors.text.primary, fontFamily: typography.family.regular }]}
+                placeholder={a.cardNumberPlaceholder}
                 placeholderTextColor={colors.text.muted}
                 value={cardNumber}
                 onChangeText={(text) => setCardNumber(formatCardNumber(text))}
@@ -147,13 +153,13 @@ export default function AddCardScreen() {
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nombre del Titular *</Text>
-            <View style={styles.inputWrapper}>
+          <View style={[styles.inputGroup, { marginBottom: spacing.md }]}>
+            <Text style={[styles.label, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, marginBottom: spacing.sm }]}>{a.cardHolder} *</Text>
+            <View style={[styles.inputWrapper, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.border.default, borderRadius: borderRadius.md, paddingHorizontal: spacing.md }]}>
               <Ionicons name="person-outline" size={20} color={colors.text.muted} />
               <TextInput
-                style={styles.input}
-                placeholder="Como aparece en la tarjeta"
+                style={[styles.input, { flex: 1, paddingVertical: spacing.md, marginLeft: spacing.sm, fontSize: typography.sizes.md, color: colors.text.primary, fontFamily: typography.family.regular }]}
+                placeholder={a.cardHolderPlaceholder}
                 placeholderTextColor={colors.text.muted}
                 value={cardHolder}
                 onChangeText={setCardHolder}
@@ -162,14 +168,14 @@ export default function AddCardScreen() {
             </View>
           </View>
 
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, styles.halfInput]}>
-              <Text style={styles.label}>Fecha de Vencimiento *</Text>
-              <View style={styles.inputWrapper}>
+          <View style={[styles.row, { flexDirection: 'row', gap: spacing.md }]}>
+            <View style={[styles.inputGroup, styles.halfInput, { flex: 1, marginBottom: spacing.md }]}>
+              <Text style={[styles.label, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, marginBottom: spacing.sm }]}>{a.expiry} *</Text>
+              <View style={[styles.inputWrapper, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.border.default, borderRadius: borderRadius.md, paddingHorizontal: spacing.md }]}>
                 <Ionicons name="calendar-outline" size={20} color={colors.text.muted} />
                 <TextInput
-                  style={styles.input}
-                  placeholder="MM/YY"
+                  style={[styles.input, { flex: 1, paddingVertical: spacing.md, marginLeft: spacing.sm, fontSize: typography.sizes.md, color: colors.text.primary, fontFamily: typography.family.regular }]}
+                  placeholder={a.expiryPlaceholder}
                   placeholderTextColor={colors.text.muted}
                   value={expiry}
                   onChangeText={(text) => setExpiry(formatExpiry(text))}
@@ -178,13 +184,13 @@ export default function AddCardScreen() {
                 />
               </View>
             </View>
-            <View style={[styles.inputGroup, styles.halfInput]}>
-              <Text style={styles.label}>CVV *</Text>
-              <View style={styles.inputWrapper}>
+            <View style={[styles.inputGroup, styles.halfInput, { flex: 1, marginBottom: spacing.md }]}>
+              <Text style={[styles.label, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, marginBottom: spacing.sm }]}>{a.cvv} *</Text>
+              <View style={[styles.inputWrapper, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.border.default, borderRadius: borderRadius.md, paddingHorizontal: spacing.md }]}>
                 <Ionicons name="lock-closed-outline" size={20} color={colors.text.muted} />
                 <TextInput
-                  style={styles.input}
-                  placeholder="123"
+                  style={[styles.input, { flex: 1, paddingVertical: spacing.md, marginLeft: spacing.sm, fontSize: typography.sizes.md, color: colors.text.primary, fontFamily: typography.family.regular }]}
+                  placeholder={a.cvvPlaceholder}
                   placeholderTextColor={colors.text.muted}
                   value={cvv}
                   onChangeText={setCvv}
@@ -196,9 +202,9 @@ export default function AddCardScreen() {
             </View>
           </View>
 
-          <View style={styles.defaultRow}>
+          <View style={[styles.defaultRow, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.lg }]}>
             <Ionicons name="star-outline" size={20} color={colors.text.secondary} />
-            <Text style={styles.defaultLabel}>Establecer como tarjeta principal</Text>
+            <Text style={[styles.defaultLabel, { flex: 1, fontSize: typography.sizes.sm, color: colors.text.secondary, marginLeft: spacing.sm, marginRight: spacing.sm, fontFamily: typography.family.regular }]}>{a.setAsDefault}</Text>
             <Switch
               value={setAsDefault}
               onValueChange={setSetAsDefault}
@@ -206,16 +212,16 @@ export default function AddCardScreen() {
             />
           </View>
 
-          <View style={styles.securityNote}>
+          <View style={[styles.securityNote, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.tertiary.default + '10', padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.lg }]}>
             <Ionicons name="shield-checkmark-outline" size={20} color={colors.tertiary.default} />
-            <Text style={styles.securityText}>
-              Tu información de pago está protegida con encriptación de 256 bits
+            <Text style={[styles.securityText, { flex: 1, fontSize: typography.sizes.sm, color: colors.tertiary.dark, marginLeft: spacing.sm, fontFamily: typography.family.regular }]}>
+              {a.securityNote}
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <TouchableOpacity style={[styles.saveButton, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.secondary.default, borderRadius: borderRadius.md, paddingVertical: spacing.md, ...shadow.md }]} onPress={handleSave}>
             <Ionicons name="checkmark" size={20} color={colors.primary.contrast} />
-            <Text style={styles.saveButtonText}>Guardar Tarjeta</Text>
+            <Text style={[styles.saveButtonText, { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, color: colors.primary.contrast, marginLeft: spacing.sm, fontFamily: typography.family.semibold }]}>{a.saveCard}</Text>
           </TouchableOpacity>
         </View>
         <View style={{ height: spacing.xxl }} />
@@ -225,200 +231,41 @@ export default function AddCardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.default,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.default,
     paddingHorizontal: spacing.md,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
-  backButton: {
-    padding: spacing.xs,
-  },
-  headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.semibold,
-  },
-  content: {
-    flex: 1,
-  },
-  cardPreview: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  previewInner: {
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    height: 180,
-    justifyContent: 'space-between',
-    ...shadow.lg,
-  },
-  creditCard: {
-    backgroundColor: colors.primary.default,
-  },
-  debitCard: {
-    backgroundColor: colors.tertiary.default,
-  },
-  previewTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  previewChip: {
-    fontSize: typography.sizes.xs,
-    color: colors.primary.contrast + '80',
-    fontWeight: typography.weights.medium,
-    fontFamily: typography.family.medium,
-  },
-  previewBrand: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.primary.contrast,
-    fontFamily: typography.family.bold,
-  },
-  previewNumber: {
-    fontSize: typography.sizes.xl,
-    color: colors.primary.contrast,
-    letterSpacing: 2,
-    fontFamily: typography.family.medium,
-  },
-  previewBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  previewLabel: {
-    fontSize: typography.sizes.xs,
-    color: colors.primary.contrast + '80',
-    fontFamily: typography.family.regular,
-  },
-  previewValue: {
-    fontSize: typography.sizes.md,
-    color: colors.primary.contrast,
-    fontWeight: typography.weights.medium,
-    fontFamily: typography.family.medium,
-  },
-  typeToggle: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-  },
-  typeBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.background.card,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-  },
-  typeBtnActive: {
-    backgroundColor: colors.secondary.default,
-    borderColor: colors.secondary.default,
-  },
-  typeText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
-    color: colors.text.secondary,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.medium,
-  },
-  typeTextActive: {
-    color: colors.primary.contrast,
-  },
-  form: {
-    paddingHorizontal: spacing.lg,
-  },
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-    fontFamily: typography.family.semibold,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background.card,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    marginLeft: spacing.sm,
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    fontFamily: typography.family.regular,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  defaultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background.card,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.lg,
-  },
-  defaultLabel: {
-    flex: 1,
-    fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
-    marginLeft: spacing.sm,
-    marginRight: spacing.sm,
-    fontFamily: typography.family.regular,
-  },
-  securityNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.tertiary.default + '10',
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.lg,
-  },
-  securityText: {
-    flex: 1,
-    fontSize: typography.sizes.sm,
-    color: colors.tertiary.dark,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.regular,
-  },
-  saveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.secondary.default,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    ...shadow.md,
-  },
-  saveButtonText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary.contrast,
-    marginLeft: spacing.sm,
-    fontFamily: typography.family.semibold,
-  },
+  backButton: { padding: spacing.xs },
+  headerTitle: {},
+  content: { flex: 1 },
+  cardPreview: {},
+  previewInner: { borderRadius: borderRadius.xl, padding: spacing.lg, height: 180, justifyContent: 'space-between', ...shadow.lg },
+  previewTop: {},
+  previewChip: {},
+  previewBrand: {},
+  previewNumber: {},
+  previewBottom: {},
+  previewLabel: {},
+  previewValue: {},
+  typeToggle: {},
+  typeBtn: {},
+  typeText: {},
+  form: {},
+  inputGroup: {},
+  label: {},
+  inputWrapper: {},
+  input: {},
+  row: {},
+  halfInput: { flex: 1 },
+  defaultRow: {},
+  defaultLabel: {},
+  securityNote: {},
+  securityText: {},
+  saveButton: { ...shadow.md },
+  saveButtonText: {},
 });
