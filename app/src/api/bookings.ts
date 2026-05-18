@@ -81,6 +81,9 @@ export interface Booking {
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   booked_at: string;
   meeting_point_name?: string;
+  payment?: {
+    status: 'pending' | 'success' | 'failed' | 'refunded';
+  };
 }
 
 export const bookingsApi = new BookingsApi();

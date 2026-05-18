@@ -64,7 +64,7 @@ export class BookingsService {
   async findByPassenger(passengerId: string): Promise<Booking[]> {
     return this.bookingsRepository.find({
       where: { passenger: { id: passengerId } },
-      relations: ['trip', 'trip.driver'],
+      relations: ['trip', 'trip.driver', 'payment'],
       order: { booked_at: 'DESC' },
     });
   }
@@ -82,7 +82,7 @@ export class BookingsService {
   async findById(id: string): Promise<Booking> {
     const booking = await this.bookingsRepository.findOne({
       where: { id },
-      relations: ['trip', 'trip.driver', 'passenger'],
+      relations: ['trip', 'trip.driver', 'passenger', 'payment'],
     });
 
     if (!booking) {

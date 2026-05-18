@@ -10,8 +10,9 @@ import {
   FlatList,
   Dimensions,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
-import { useRouter, Link, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, Link } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import TabHeader from '@/components/TabHeader';
@@ -22,6 +23,12 @@ import { tripsApi } from '@/api/trips';
 import { routesApi, FrequentRoute } from '@/api/routes';
 
 const { width } = Dimensions.get('window');
+
+// shadow.sm uses React Native shadow props that break on web — use boxShadow instead
+const cardShadow: any = Platform.select({
+  web: { boxShadow: '0px 1px 4px rgba(0,0,0,0.10)' },
+  default: shadow.sm,
+});
 
 interface Trip {
   id: string;
@@ -123,7 +130,7 @@ export default function HomeScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.routeCard, { backgroundColor: colors.background.card, ...shadow.sm }]}
+        style={[styles.routeCard, { backgroundColor: colors.background.card, ...cardShadow }]}
         onPress={() => {
           if (isPublication) {
             router.push({
@@ -164,47 +171,47 @@ export default function HomeScreen() {
   };
 
   const renderTripCard = ({ item }: { item: Trip }) => (
-    <Link href={`/trip/${item.id}`} asChild>
-      <TouchableOpacity style={[styles.tripCard, { backgroundColor: colors.background.card, ...shadow.sm }]}>
+      <TouchableOpacity
+        style={[styles.tripCard, { backgroundColor: colors.background.card, ...cardShadow }]}
+        onPress={() => router.push(`/trip/${item.id}` as any)}>
         <View style={styles.cardHeader}>
           <View style={styles.driverInfo}>
             <View style={[styles.driverAvatar, { backgroundColor: colors.secondary.default }]}>
               <Text style={[styles.avatarText, { color: colors.primary.contrast, fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{item.driver?.full_name?.charAt(0) || '?'}</Text>
             </View>
             <View>
-               <Text style={[styles.driverName, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{item.driver?.full_name || c.unknown}</Text>
-               <Text style={[styles.driverFaculty, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.driver?.faculty || '-'}</Text>
+              <Text style={[styles.driverName, { color: colors.text.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{item.driver?.full_name || c.unknown}</Text>
+              <Text style={[styles.driverFaculty, { color: colors.text.muted, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.driver?.faculty || '-'}</Text>
             </View>
           </View>
           <View style={[styles.ratingBadge, { backgroundColor: '#FEF3C7' }]}>
             <Ionicons name="star" size={10} color="#F59E0B" />
-             <Text style={[styles.ratingText, { color: '#92400E', fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{typeof item.driver?.average_rating === 'number' ? item.driver.average_rating.toFixed(1) : '0.0'}</Text>
+            <Text style={[styles.ratingText, { color: '#92400E', fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{typeof item.driver?.average_rating === 'number' ? item.driver.average_rating.toFixed(1) : '0.0'}</Text>
           </View>
         </View>
         <View style={styles.routeContainer}>
           <View style={styles.routePoint}>
             <Ionicons name="location" size={14} color={colors.tertiary.default} />
-             <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.origin_name}</Text>
+            <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.origin_name}</Text>
           </View>
           <View style={[styles.routeLine, { backgroundColor: colors.border.default }]} />
           <View style={styles.routePoint}>
             <Ionicons name="flag" size={14} color={colors.secondary.default} />
-             <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.destination_name}</Text>
+            <Text style={[styles.routeText, { color: colors.text.primary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]} numberOfLines={1}>{item.destination_name}</Text>
           </View>
         </View>
         <View style={styles.cardFooter}>
           <View style={styles.tripDetails}>
             <Ionicons name="time-outline" size={14} color={colors.text.muted} />
-             <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{formatTime(item.departure_time)}</Text>
+            <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{formatTime(item.departure_time)}</Text>
           </View>
           <View style={styles.tripDetails}>
             <Ionicons name="people-outline" size={14} color={colors.text.muted} />
-             <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.available_seats} {c.seats}</Text>
+            <Text style={[styles.detailText, { color: colors.text.secondary, fontSize: typography.sizes.sm, fontFamily: typography.family.regular }]}>{item.available_seats} {c.seats}</Text>
           </View>
-           <Text style={[styles.priceText, { color: colors.tertiary.default, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>${Number(item.price).toLocaleString(language === 'en' ? 'en-US' : 'es-CO')}</Text>
+          <Text style={[styles.priceText, { color: colors.tertiary.default, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>${Number(item.price).toLocaleString(language === 'en' ? 'en-US' : 'es-CO')}</Text>
         </View>
       </TouchableOpacity>
-    </Link>
   );
 
   const displayName = user?.full_name?.split(' ')[0] || 'Carlos';
@@ -256,8 +263,8 @@ export default function HomeScreen() {
             <View style={[styles.ctaIconBg, { backgroundColor: colors.primary.contrast + '20' }]}>
               <Ionicons name="search" size={28} color={colors.primary.contrast} />
             </View>
-             <Text style={[styles.ctaTitle, { color: colors.primary.contrast, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{h.searchTrip}</Text>
-             <Text style={[styles.ctaSubtitle, { color: colors.primary.contrast + 'CC', fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}>{h.searchTripSub}</Text>
+            <Text style={[styles.ctaTitle, { color: colors.primary.contrast, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{h.searchTrip}</Text>
+            <Text style={[styles.ctaSubtitle, { color: colors.primary.contrast + 'CC', fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}>{h.searchTripSub}</Text>
           </View>
           <View style={styles.ctaRight}>
             <Ionicons name="car-sport" size={64} color={colors.primary.contrast + '40'} />
@@ -268,23 +275,25 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.quickActionsGrid}>
               {quickActions.map((action, i) => (
-                <Link href={action.href as any} key={i} asChild>
-                  <TouchableOpacity style={styles.quickActionCard}>
+                <TouchableOpacity
+                  key={i}
+                  style={styles.quickActionCard}
+                  onPress={() => router.push(action.href as any)}
+                >
                     <View style={[styles.quickActionCardInner, { backgroundColor: action.bg }]}>
                       <View style={[styles.qaIconBg, { backgroundColor: action.color + '30' }]}>
                         <Ionicons name={action.icon as any} size={24} color={action.color} />
                       </View>
                       <Text style={[styles.qaTitle, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{action.title}</Text>
                     </View>
-                  </TouchableOpacity>
-                </Link>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
         )}
 
         <View style={styles.section}>
-        <View style={styles.sectionHeader}>
+          <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{h.frequentRoutes}</Text>
             <TouchableOpacity onPress={() => router.push('/bookings')}>
               <Text style={[styles.seeAll, { color: colors.secondary.default, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{h.seeAll}</Text>
@@ -308,7 +317,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-        <View style={styles.sectionHeader}>
+          <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text.primary, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{h.availableTrips}</Text>
             <TouchableOpacity onPress={() => router.push('/search')}>
               <Text style={[styles.seeAll, { color: colors.secondary.default, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{h.seeAll}</Text>
@@ -346,8 +355,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   greetingSection: {},
   content: { flex: 1 },
-  ctaCard: { marginHorizontal: spacing.lg, marginVertical: spacing.lg, borderRadius: borderRadius.xl, overflow: 'hidden', padding: spacing.lg },
-  ctaGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.lg, minHeight: 120 },
+  ctaCard: { marginHorizontal: spacing.lg, marginVertical: spacing.lg, borderRadius: borderRadius.xl, overflow: 'hidden', padding: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 120 },
   ctaLeft: { flex: 1 },
   ctaIconBg: { width: 48, height: 48, borderRadius: borderRadius.full, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm },
   ctaTitle: {},

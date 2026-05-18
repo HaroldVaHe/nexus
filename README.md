@@ -49,6 +49,7 @@ npm install
 cp .env.example .env
 
 # Editar .env con tus credenciales de PostgreSQL
+# Nota: Para Mercado Pago auto_return, FRONTEND_URL debe ser una URL HTTPS accesible desde Mercado Pago.
 nano .env
 
 # Crear la base de datos (en PostgreSQL)

@@ -14,16 +14,21 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SabanaCoinsModule } from './modules/sabana-coins/sabana-coins.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 
+
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
     TypeOrmModule.forRoot(databaseConfig),
+
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 100,
     }]),
+
     AuthModule,
     UsersModule,
     TripsModule,
@@ -34,11 +39,13 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
     SabanaCoinsModule,
     VehiclesModule,
   ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
+
+  // providers: [
+  //   {
+  //     provide: APP_GUARD,
+  //     useClass: ThrottlerGuard,
+  //   },
+  // ],
+
 })
 export class AppModule {}

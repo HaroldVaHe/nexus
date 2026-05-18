@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export const colors = {
   primary: {
     default: '#0F172A',
@@ -119,26 +121,36 @@ export const typography = {
   },
 };
 
+// shadowOffset: { width, height } crashes react-native-web because it tries to
+// set it as an indexed CSS property. We avoid it entirely on web.
+const isWeb = Platform.OS === 'web';
+
 export const shadow = {
-  sm: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  md: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  lg: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: 4,
-  },
+  sm: isWeb
+    ? { boxShadow: '0px 1px 2px rgba(15,23,42,0.08)' } as any
+    : {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+        elevation: 1,
+      },
+  md: isWeb
+    ? { boxShadow: '0px 2px 4px rgba(15,23,42,0.12)' } as any
+    : {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
+        elevation: 2,
+      },
+  lg: isWeb
+    ? { boxShadow: '0px 4px 8px rgba(15,23,42,0.16)' } as any
+    : {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.16,
+        shadowRadius: 8,
+        elevation: 4,
+      },
 };

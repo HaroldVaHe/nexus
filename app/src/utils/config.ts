@@ -10,7 +10,7 @@ export const CONFIG = {
   },
   API: {
     BASE_URL: __DEV__
-      ? 'http://10.57.57.227:3000/api/v1'
+      ? 'http://localhost:3000/api/v1' // Cambia a tu IP local si usas dispositivo físico o Expo Go
       : 'https://api.nexus.unisabana.edu.co/api/v1',
     TIMEOUT: 15000,
   },
