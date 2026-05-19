@@ -8,11 +8,22 @@ import {
   Manrope_700Bold,
   Manrope_800ExtraBold,
 } from '@expo-google-fonts/manrope';
+import * as Sentry from 'sentry-expo';
 import { AuthProvider } from '@/context/AuthContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { colors } from '@/theme/colors';
+import { CONFIG } from '@/utils/config';
 
-export default function RootLayout() {
+if (CONFIG.SENTRY_DSN) {
+  Sentry.init({
+    dsn: CONFIG.SENTRY_DSN,
+    environment: __DEV__ ? 'development' : 'production',
+    enableInExpoDevelopment: true,
+    tracesSampleRate: 0.1,
+  });
+}
+
+function RootLayout() {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_500Medium,
@@ -25,7 +36,7 @@ export default function RootLayout() {
     return null;
   }
 
-  return (
+  const content = (
     <SafeAreaProvider>
       <AuthProvider>
         <SettingsProvider>
@@ -42,4 +53,12 @@ export default function RootLayout() {
       </AuthProvider>
     </SafeAreaProvider>
   );
+
+  if (CONFIG.SENTRY_DSN) {
+    return <Sentry.Native.ErrorBoundary>{content}</Sentry.Native.ErrorBoundary>;
+  }
+
+  return content;
 }
+
+export default RootLayout;

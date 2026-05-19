@@ -14,8 +14,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SabanaCoinsModule } from './modules/sabana-coins/sabana-coins.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { CardsModule } from './modules/cards/cards.module';
-
-
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -40,6 +39,7 @@ import { CardsModule } from './modules/cards/cards.module';
     SabanaCoinsModule,
     VehiclesModule,
     CardsModule,
+    HealthModule,
   ],
 
   // providers: [

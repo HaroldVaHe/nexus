@@ -89,6 +89,18 @@ export default function AboutScreen() {
           </View>
         </View>
 
+        <View style={[styles.section, { paddingHorizontal: spacing.lg, marginBottom: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.text.secondary, fontFamily: typography.family.semibold, letterSpacing: 0.5, marginBottom: spacing.sm, textTransform: 'uppercase' }]}>Developer</Text>
+          <View style={[styles.card, { backgroundColor: colors.background.card, borderRadius: borderRadius.lg, overflow: 'hidden', ...shadow.sm }]}>
+            <TouchableOpacity style={[styles.row, { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.md }]} activeOpacity={0.6}
+              onPress={() => router.push('/sentry-test')}>
+              <Ionicons name="bug-outline" size={20} color="#e74c3c" />
+              <Text style={[styles.rowLabel, { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, color: colors.text.primary, fontFamily: typography.family.medium, marginLeft: spacing.md }]}>Test Sentry</Text>
+              <Ionicons name="chevron-forward" size={18} color={colors.text.muted} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={{ height: spacing.xxl }} />
       </ScrollView>
     </SafeAreaView>

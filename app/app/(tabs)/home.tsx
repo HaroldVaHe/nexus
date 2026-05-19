@@ -127,7 +127,8 @@ export default function HomeScreen() {
     const isPublication = item.type === 'publication';
     const icon = isPublication ? 'car-sport-outline' : 'car-outline';
     const iconColor = isPublication ? colors.tertiary.default : colors.secondary.default;
-
+    
+    // throw new Error('Prueba Sentry');
     return (
       <TouchableOpacity
         style={[styles.routeCard, { backgroundColor: colors.background.card, ...cardShadow }]}
