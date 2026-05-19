@@ -51,6 +51,19 @@ class UsersApi {
       body: JSON.stringify({ roles }),
     });
   }
+
+  async updateProfile(token: string, data: Partial<ProfileData>) {
+    return this.request<ProfileData>('/users/me', token, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAccount(token: string) {
+    return this.request<{ success: boolean }>('/users/me', token, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const usersApi = new UsersApi();

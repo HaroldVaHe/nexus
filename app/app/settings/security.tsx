@@ -16,17 +16,49 @@ import { borderRadius, spacing, shadow } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '@/context/SettingsContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/context/AuthContext';
+import { usersApi } from '@/api/users';
 
 export default function SecurityScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useSettings();
   const { colors, typography } = useTheme();
+  const { token, logout } = useAuth();
   const [twoFactor, setTwoFactor] = useState(false);
   const [biometric, setBiometric] = useState(true);
   const [profileVisibility, setProfileVisibility] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   const s = t.security;
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      s.deleteAccount,
+      s.deleteConfirm,
+      [
+        { text: t.common.cancel, style: 'cancel' },
+        {
+          text: s.deleteAccount,
+          style: 'destructive',
+          onPress: async () => {
+            if (!token) return;
+            setDeleting(true);
+            try {
+              await usersApi.deleteAccount(token);
+              Alert.alert(t.common.success, s.accountDeleted, [
+                { text: 'OK', onPress: () => { logout(); router.replace('/(auth)/login'); } },
+              ]);
+            } catch (error: any) {
+              Alert.alert(t.common.error, error.message || s.deleteError);
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
@@ -65,7 +97,7 @@ export default function SecurityScreen() {
             </View>
             <View style={[styles.divider, { height: 1, backgroundColor: colors.border.default, marginHorizontal: spacing.md }]} />
             <TouchableOpacity style={[styles.row, { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.md }]} activeOpacity={0.6}
-              onPress={() => Alert.alert(s.changePassword, 'This feature is coming soon.')}>
+              onPress={() => router.push('/settings/change-password')}>
               <Ionicons name="key-outline" size={20} color="#F59E0B" />
               <Text style={[styles.rowLabel, { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, color: colors.text.primary, fontFamily: typography.family.medium, marginLeft: spacing.md }]}>{s.changePassword}</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.text.muted} />
@@ -93,6 +125,27 @@ export default function SecurityScreen() {
               <Ionicons name="chevron-forward" size={18} color={colors.text.muted} />
             </TouchableOpacity>
           </View>
+        </View>
+
+        <View style={[styles.dangerSection, { paddingHorizontal: spacing.lg, marginBottom: spacing.lg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.status.error, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, letterSpacing: 0.5, marginBottom: spacing.sm, textTransform: 'uppercase' }]}>ZONA DE PELIGRO</Text>
+          <View style={[styles.card, { backgroundColor: colors.background.card, ...shadow.sm, borderRadius: borderRadius.lg, overflow: 'hidden' }]}>
+            <TouchableOpacity
+              style={[styles.row, { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.md }]}
+              activeOpacity={0.6}
+              onPress={handleDeleteAccount}
+              disabled={deleting}
+            >
+              <Ionicons name="trash-outline" size={20} color={colors.status.error} />
+              <Text style={[styles.rowLabel, { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, color: colors.status.error, fontFamily: typography.family.medium, marginLeft: spacing.md }]}>{s.deleteAccount}</Text>
+              {deleting ? (
+                <ActivityIndicator size="small" color={colors.status.error} />
+              ) : (
+                <Ionicons name="chevron-forward" size={18} color={colors.text.muted} />
+              )}
+            </TouchableOpacity>
+          </View>
+          <Text style={[styles.warningText, { color: colors.text.muted, fontSize: typography.sizes.xs, fontFamily: typography.family.regular, marginTop: spacing.sm, textAlign: 'center' }]}>{s.deleteAccountWarning}</Text>
         </View>
 
         <View style={{ height: spacing.xxl }} />

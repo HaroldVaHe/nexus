@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,12 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, Link } from 'expo-router';
+import { useRouter, Link, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import HeaderMenu from '@/components/HeaderMenu';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/context/AuthContext';
+import { notificationsApi } from '@/api/notifications';
 import { borderRadius, spacing } from '@/theme/colors';
 
 type TabHeaderProps = {
@@ -21,6 +23,15 @@ export default function TabHeader({ children }: TabHeaderProps) {
   const router = useRouter();
   const { colors, typography } = useTheme();
   const insets = useSafeAreaInsets();
+  const { token } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      notificationsApi.getUnreadCount(token).then(setUnreadCount).catch(() => {});
+    }, [token])
+  );
 
   return (
     <View style={[styles.header, { backgroundColor: colors.primary.default, paddingTop: insets.top + spacing.md, paddingBottom: spacing.md, minHeight: insets.top + 72 }]}>
@@ -34,7 +45,9 @@ export default function TabHeader({ children }: TabHeaderProps) {
             <TouchableOpacity style={styles.notifButton} activeOpacity={0.7}>
               <Ionicons name="notifications-outline" size={24} color={colors.primary.contrast} />
               <View style={[styles.notifBadge, { backgroundColor: colors.status.error }]}>
-                <Text style={[styles.notifBadgeText, { color: colors.primary.contrast, fontSize: 9, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>3</Text>
+                {unreadCount > 0 && (
+  <Text style={[styles.notifBadgeText, { color: colors.primary.contrast, fontSize: 9, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+)}
               </View>
             </TouchableOpacity>
           </Link>
@@ -61,8 +74,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: borderRadius.full,
     marginRight: spacing.sm,
   },

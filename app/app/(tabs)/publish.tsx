@@ -279,13 +279,12 @@ export default function PublishTripScreen() {
           />
 
           <View style={styles.swapRow}>
-            <View style={[styles.swapLine, { backgroundColor: colors.border.default }]} />
             <TouchableOpacity
               style={[styles.swapButton, { backgroundColor: colors.background.card, borderColor: colors.border.default }]}
               onPress={swapLocations}
               disabled={!origin && !destination}
             >
-              <Ionicons name="swap-vertical" size={18} color={colors.secondary.default} />
+              <Ionicons name="swap-vertical" size={20} color={colors.secondary.default} />
             </TouchableOpacity>
           </View>
 
@@ -461,9 +460,8 @@ const styles = StyleSheet.create({
   section: { marginBottom: spacing.md },
   sectionTitle: { marginBottom: spacing.sm },
   inputLabel: { marginBottom: spacing.sm, marginTop: spacing.xs },
-  swapRow: { alignItems: 'center', marginVertical: spacing.xs },
-  swapLine: { width: 1, height: 24 },
-  swapButton: { width: 36, height: 36, borderRadius: borderRadius.full, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+  swapRow: { alignItems: 'center', marginBottom: -20, zIndex: 1 },
+  swapButton: { width: 40, height: 40, borderRadius: borderRadius.full, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center' },
   errorBox: { flexDirection: 'row', alignItems: 'center', borderRadius: borderRadius.md, padding: spacing.sm, marginTop: spacing.sm, gap: spacing.sm },
   errorText: {},
   card: { borderRadius: borderRadius.lg, padding: spacing.md, borderWidth: 1 },

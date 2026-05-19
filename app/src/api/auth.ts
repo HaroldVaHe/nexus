@@ -60,6 +60,16 @@ class ApiClient {
       },
     });
   }
+
+  async changePassword(token: string, currentPassword: string, newPassword: string) {
+    return this.request<{ success: boolean }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

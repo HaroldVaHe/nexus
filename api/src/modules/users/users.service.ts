@@ -139,6 +139,11 @@ export class UsersService {
     return profile;
   }
 
+  async deleteAccount(id: string): Promise<void> {
+    const user = await this.findById(id);
+    await this.usersRepository.update(user.id, { status: 'deactivated' as any });
+  }
+
   async getAll() {
     const users = await this.usersRepository.find();
     return users.map(u => {

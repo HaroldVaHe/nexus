@@ -24,18 +24,22 @@ export default function HelpScreen() {
   const [activeCategory, setActiveCategory] = useState('general');
 
   const faqData = [
-    { id: '1', question: t.help.faqData.publishTrip.q, answer: t.help.faqData.publishTrip.a },
-    { id: '2', question: t.help.faqData.bookSeat.q, answer: t.help.faqData.bookSeat.a },
-    { id: '3', question: t.help.faqData.sabanaCoins.q, answer: t.help.faqData.sabanaCoins.a },
-    { id: '4', question: t.help.faqData.payment.q, answer: t.help.faqData.payment.a },
-    { id: '5', question: t.help.faqData.cancelBooking.q, answer: t.help.faqData.cancelBooking.a },
-    { id: '6', question: t.help.faqData.whoCanUse.q, answer: t.help.faqData.whoCanUse.a },
-    { id: '7', question: t.help.faqData.ratingSystem.q, answer: t.help.faqData.ratingSystem.a },
+    { id: '1', question: t.help.faqData.publishTrip.q, answer: t.help.faqData.publishTrip.a, category: 'trips' },
+    { id: '2', question: t.help.faqData.bookSeat.q, answer: t.help.faqData.bookSeat.a, category: 'trips' },
+    { id: '3', question: t.help.faqData.sabanaCoins.q, answer: t.help.faqData.sabanaCoins.a, category: 'payments' },
+    { id: '4', question: t.help.faqData.payment.q, answer: t.help.faqData.payment.a, category: 'payments' },
+    { id: '5', question: t.help.faqData.cancelBooking.q, answer: t.help.faqData.cancelBooking.a, category: 'trips' },
+    { id: '6', question: t.help.faqData.whoCanUse.q, answer: t.help.faqData.whoCanUse.a, category: 'general' },
+    { id: '7', question: t.help.faqData.ratingSystem.q, answer: t.help.faqData.ratingSystem.a, category: 'general' },
+    { id: '8', question: t.help.faqData.changePassword.q, answer: t.help.faqData.changePassword.a, category: 'account' },
+    { id: '9', question: t.help.faqData.editProfile.q, answer: t.help.faqData.editProfile.a, category: 'account' },
+    { id: '10', question: t.help.faqData.deleteAccount.q, answer: t.help.faqData.deleteAccount.a, category: 'account' },
   ];
 
   const filteredFaqs = faqData.filter(faq =>
-    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+    (activeCategory === 'general' || faq.category === activeCategory) &&
+    (faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     faq.answer.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const categories = [
@@ -65,7 +69,7 @@ export default function HelpScreen() {
           <TextInput style={[styles.searchInput, { flex: 1, marginLeft: spacing.sm, fontSize: typography.sizes.md, color: colors.text.primary, fontFamily: typography.family.regular }]} placeholder={t.help.searchPlaceholder} placeholderTextColor={colors.text.muted} value={searchQuery} onChangeText={setSearchQuery} />
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.categoriesContainer, { paddingHorizontal: spacing.lg, marginBottom: spacing.md }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.categoriesContainer, { marginBottom: spacing.md }]} contentContainerStyle={{ paddingHorizontal: spacing.lg }}>
           {categories.map(cat => (
             <TouchableOpacity key={cat.id} style={[styles.categoryChip, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: borderRadius.full, marginRight: spacing.sm, borderWidth: 1, borderColor: colors.border.default },
               activeCategory === cat.id && { backgroundColor: colors.secondary.default, borderColor: colors.secondary.default }]} onPress={() => setActiveCategory(cat.id)}>
@@ -74,6 +78,7 @@ export default function HelpScreen() {
                 activeCategory === cat.id && { color: colors.primary.contrast }]}>{cat.label}</Text>
             </TouchableOpacity>
           ))}
+          <View style={{ width: spacing.lg }} />
         </ScrollView>
 
         <View style={[styles.faqSection, { paddingHorizontal: spacing.lg, marginBottom: spacing.lg }]}>

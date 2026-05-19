@@ -98,7 +98,7 @@ export default function SettingsScreen() {
       items: [
         { id: 'notifications', title: s.notifications.title, subtitle: s.notifications.subtitle, icon: 'notifications-outline', route: '/settings/notifications', iconColor: colors.secondary.default },
         { id: 'privacy', title: s.privacy.title, subtitle: s.privacy.subtitle, icon: 'shield-checkmark-outline', route: '/settings/security', iconColor: colors.tertiary.default },
-        { id: 'payments', title: s.payments.title, subtitle: s.payments.subtitle, icon: 'card-outline', route: '/settings/payments', iconColor: '#F59E0B' },
+        { id: 'payments', title: s.payments.title, subtitle: s.payments.subtitle, icon: 'card-outline', route: '/payments', iconColor: '#F59E0B' },
       ],
     },
     {

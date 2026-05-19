@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { borderRadius, spacing, shadow } from '@/theme/colors';
+import { borderRadius, spacing, shadow, typography } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import TabHeader from '@/components/TabHeader';
 import { useTheme } from '@/hooks/useTheme';
@@ -28,6 +30,11 @@ export default function ProfileScreen() {
   const [updatingRoles, setUpdatingRoles] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editFaculty, setEditFaculty] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
 
   const loadProfile = useCallback(async () => {
     if (!token) return;
@@ -85,6 +92,32 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleEditProfile = () => {
+    setEditName(fullName);
+    setEditFaculty(userFaculty);
+    setEditPhone(userPhone);
+    setEditModal(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!token) return;
+    setSavingProfile(true);
+    try {
+      const updated = await usersApi.updateProfile(token, {
+        full_name: editName,
+        faculty: editFaculty || undefined,
+        phone: editPhone || undefined,
+      });
+      setProfile(updated);
+      setEditModal(false);
+      Alert.alert(t.common.success, 'Perfil actualizado correctamente');
+    } catch (error: any) {
+      Alert.alert(t.common.error, error.message || 'Error al actualizar el perfil');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert(
       p.logout,
@@ -116,7 +149,12 @@ export default function ProfileScreen() {
 
       <ScrollView style={styles.content}>
         <View style={[styles.profileSection, { backgroundColor: colors.background.card }]}>
-          <Text style={[styles.greeting, { fontSize: typography.sizes.xl, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, color: colors.text.primary }]}>{p.hello}, {displayName}!</Text>
+          <View style={[styles.greetingRow, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: spacing.lg, marginBottom: spacing.sm }]}>
+            <Text style={[styles.greeting, { fontSize: typography.sizes.xl, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold, color: colors.text.primary }]}>{p.hello}, {displayName}!</Text>
+            <TouchableOpacity onPress={handleEditProfile} style={[styles.editProfileBtn, { marginLeft: spacing.sm }]}>
+              <Ionicons name="pencil" size={18} color={colors.secondary.default} />
+            </TouchableOpacity>
+          </View>
           <View style={[styles.avatar, { backgroundColor: colors.secondary.default }]}>
             <Text style={[styles.avatarTextLarge, { fontSize: typography.sizes.xxxl, fontWeight: typography.weights.bold, fontFamily: typography.family.bold, color: colors.primary.contrast }]}>{fullName.charAt(0)}</Text>
           </View>
@@ -304,6 +342,67 @@ export default function ProfileScreen() {
         </TouchableOpacity>
         <View style={{ height: spacing.xxl }} />
       </ScrollView>
+
+      <Modal visible={editModal} transparent animationType="slide" onRequestClose={() => setEditModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background.default }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border.default }]}>
+              <Text style={[styles.modalTitle, { color: colors.text.primary, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontFamily: typography.family.bold }]}>Editar Perfil</Text>
+              <TouchableOpacity onPress={() => setEditModal(false)}>
+                <Ionicons name="close" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>Nombre completo</Text>
+                <TextInput
+                  style={[styles.modalInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
+                  value={editName}
+                  onChangeText={setEditName}
+                  placeholder="Tu nombre"
+                  placeholderTextColor={colors.text.muted}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>Facultad</Text>
+                <TextInput
+                  style={[styles.modalInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
+                  value={editFaculty}
+                  onChangeText={setEditFaculty}
+                  placeholder="Ej: Ingeniería"
+                  placeholderTextColor={colors.text.muted}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: colors.text.primary, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>Teléfono</Text>
+                <TextInput
+                  style={[styles.modalInput, { backgroundColor: colors.background.card, borderColor: colors.border.default, color: colors.text.primary, fontSize: typography.sizes.md, fontFamily: typography.family.regular }]}
+                  value={editPhone}
+                  onChangeText={setEditPhone}
+                  placeholder="+57 300 123 4567"
+                  placeholderTextColor={colors.text.muted}
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveButton, { backgroundColor: colors.secondary.default, borderRadius: borderRadius.md }, savingProfile && { opacity: 0.6 }]}
+                onPress={handleSaveProfile}
+                disabled={savingProfile}
+              >
+                {savingProfile ? (
+                  <ActivityIndicator size="small" color={colors.primary.contrast} />
+                ) : (
+                  <Text style={[styles.saveButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, fontFamily: typography.family.semibold }]}>{t.common.save}</Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -356,6 +455,18 @@ const styles = StyleSheet.create({
   },
   roleText: {},
   toggleBtn: { padding: spacing.xs, marginLeft: spacing.sm },
+  greetingRow: {},
+  editProfileBtn: { padding: spacing.xs },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { borderTopLeftRadius: borderRadius.xl, borderTopRightRadius: borderRadius.xl, maxHeight: '80%', paddingBottom: 40 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 1 },
+  modalTitle: {},
+  modalBody: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
+  inputGroup: { marginBottom: spacing.md },
+  inputLabel: { marginBottom: spacing.sm },
+  modalInput: { borderWidth: 1, borderRadius: borderRadius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: typography.sizes.md },
+  saveButton: { paddingVertical: spacing.md, alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm },
+  saveButtonText: {},
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   tagChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: borderRadius.full, gap: spacing.xs },
   tagText: {},

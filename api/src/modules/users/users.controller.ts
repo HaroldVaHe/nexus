@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Patch, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Put, Patch, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -24,6 +24,17 @@ export class UsersController {
   @Get('me/frequent-routes')
   async getFrequentRoutes(@Req() req: any) {
     return this.usersService.getFrequentRoutes(req.user.id);
+  }
+
+  @Put('me')
+  async updateMe(@Req() req: any, @Body() updateData: Partial<any>) {
+    return this.usersService.updateProfile(req.user.id, updateData);
+  }
+
+  @Delete('me')
+  async deleteMe(@Req() req: any) {
+    await this.usersService.deleteAccount(req.user.id);
+    return { success: true };
   }
 
   @Roles('driver', 'passenger')

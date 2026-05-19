@@ -1,10 +1,12 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto, EmailDto, MicrosoftAuthDto } from './dto/login.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('auth')
 @UseGuards()
@@ -36,6 +38,15 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Microsoft auth successful' })
   async microsoftAuth(@Body() dto: MicrosoftAuthDto) {
     return this.authService.authenticateWithMicrosoft(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('change-password')
+  @ApiOperation({ summary: 'Change current user password' })
+  async changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
+    await this.authService.changePassword(req.user.id, dto.currentPassword, dto.newPassword);
+    return { success: true };
   }
 
   @Throttle({ default: { limit: 20, ttl: 60000 } })

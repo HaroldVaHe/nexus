@@ -105,20 +105,6 @@ export default function LoginScreen() {
 
             <Text
               style={[
-                styles.title,
-                {
-                  fontSize: typography.sizes.xxxl,
-                  fontWeight: typography.weights.extrabold,
-                  fontFamily: typography.family.bold,
-                  color: colors.primary.default,
-                },
-              ]}
-            >
-              {t.app.name}
-            </Text>
-
-            <Text
-              style={[
                 styles.subtitle,
                 {
                   fontSize: typography.sizes.lg,
@@ -481,13 +467,9 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 120,
-    height: 120,
+    width: 140,
+    height: 140,
     marginBottom: spacing.md,
-  },
-
-  title: {
-    marginBottom: spacing.xs,
   },
 
   subtitle: {
