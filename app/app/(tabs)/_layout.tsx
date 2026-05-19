@@ -4,7 +4,7 @@ import { useSettings } from '@/context/SettingsContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 
 export default function TabsLayout() {
   const { t } = useSettings();
@@ -50,7 +50,9 @@ export default function TabsLayout() {
         options={{
           title: t.tabs.home,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <View style={{ alignItems: 'center', justifyContent: 'center', height: size + 8 }}>
+              <Ionicons name="home" size={size} color={color} />
+            </View>
           ),
         }}
       />
@@ -60,7 +62,9 @@ export default function TabsLayout() {
           title: t.tabs.search,
           href: isPassenger ? undefined : null,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
+            <View style={{ alignItems: 'center', justifyContent: 'center', height: size + 8 }}>
+              <Ionicons name="search" size={size} color={color} />
+            </View>
           ),
         }}
       />
@@ -70,7 +74,9 @@ export default function TabsLayout() {
           title: t.tabs.publish,
           href: isDriver ? undefined : null,
           tabBarIcon: ({ size }) => (
-            <Ionicons name="add-circle" size={size + 8} color={colors.tertiary.default} />
+            <View style={{ alignItems: 'center', justifyContent: 'center', height: size + 8 }}>
+              <Ionicons name="add-circle" size={size + 8} color={colors.tertiary.default} />
+            </View>
           ),
         }}
       />
@@ -79,7 +85,9 @@ export default function TabsLayout() {
         options={{
           title: t.tabs.profile,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <View style={{ alignItems: 'center', justifyContent: 'center', height: size + 8 }}>
+              <Ionicons name="person" size={size} color={color} />
+            </View>
           ),
         }}
       />
