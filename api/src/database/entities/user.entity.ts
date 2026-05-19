@@ -14,6 +14,7 @@ import { Notification } from './notification.entity';
 import { SabanaCoinsLedger } from './sabana-coins-ledger.entity';
 import { UserRole as UserRoleEntity } from './user-role.entity';
 import { Vehicle } from './vehicle.entity';
+import { SavedCard } from './saved-card.entity';
 
 export type UserStatus = 'active' | 'suspended' | 'deactivated';
 
@@ -91,4 +92,7 @@ export class User {
 
   @OneToMany(() => Vehicle, (vehicle) => vehicle.driver)
   vehicles: Vehicle[];
+
+  @OneToMany(() => SavedCard, (card) => card.user)
+  saved_cards: SavedCard[];
 }

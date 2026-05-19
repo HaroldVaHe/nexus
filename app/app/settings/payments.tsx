@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { borderRadius, spacing, shadow } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,7 @@ const mockCards = [
 ];
 
 export default function PaymentsScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useSettings();
   const { colors, typography } = useTheme();
@@ -32,7 +34,7 @@ export default function PaymentsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary.default} />
 
-      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default, paddingTop: insets.top + spacing.md }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
           <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
         </TouchableOpacity>
@@ -85,7 +87,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.sm : spacing.md,
     paddingBottom: spacing.md,
   },
   backButton: { padding: spacing.xs },

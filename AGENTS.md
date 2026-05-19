@@ -36,9 +36,9 @@ psql -U postgres -d nexus -f database/schema.sql
 
 - **DB schema**: `database/schema.sql` is the single source of truth. Contains all tables + views. Run manually on fresh installs.
 - **Auth flow**: JWT only (no refresh tokens yet). Microsoft OAuth is a stub (`verifyMicrosoftToken` returns mock email).
-- **Frontend screens**: All UI exists in `app/app/` using expo-router. Most screens use **mock data** — only login/register connect to the backend via `app/src/api/auth.ts`.
-- **API client**: `app/src/api/auth.ts` is the only API integration. Other modules (trips, bookings, etc.) have no frontend client yet.
-- **Headers**: All screens with custom headers need `Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing : spacing` for paddingTop. Pattern already applied.
+- **Frontend screens**: All UI exists in `app/app/` using expo-router. Screens connect to real backend APIs for auth, trips, bookings, vehicles, users, routes, and Sabana Coins. Payments UI (cards/PSE) and reports still use mock data.
+- **API clients** in `app/src/api/`: `auth.ts`, `trips.ts`, `bookings.ts`, `payments.ts`, `sabana-coins.ts`, `routes.ts`, `users.ts`, `vehicles.ts` — all integrated with backend.
+- **Headers**: All screens with custom headers use `insets.top + spacing.md` (via `useSafeAreaInsets()` from `react-native-safe-area-context`) for paddingTop. Works on Android status bar + iOS notch. Pattern already applied across all screens.
 
 ## Conventions
 

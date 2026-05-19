@@ -11,6 +11,7 @@ import {
   useColorScheme,
   Switch,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '@/context/SettingsContext';
@@ -18,6 +19,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { borderRadius, spacing, shadow } from '@/theme/colors';
 
 export default function AppearanceScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t, appearance, setFontScale, setHighContrast, setAlwaysShowStatusBar, setTheme } = useSettings();
   const { colors, typography } = useTheme();
@@ -44,7 +46,7 @@ export default function AppearanceScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.primary.default} />
 
-      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default, paddingTop: insets.top + 16 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
           <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
         </TouchableOpacity>
@@ -137,7 +139,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 8 : 16,
     paddingBottom: 16,
   },
   backButton: { padding: 4 },

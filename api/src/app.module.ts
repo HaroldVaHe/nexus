@@ -13,6 +13,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SabanaCoinsModule } from './modules/sabana-coins/sabana-coins.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
+import { CardsModule } from './modules/cards/cards.module';
 
 
 
@@ -38,6 +39,7 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
     NotificationsModule,
     SabanaCoinsModule,
     VehiclesModule,
+    CardsModule,
   ],
 
   // providers: [

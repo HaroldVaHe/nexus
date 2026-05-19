@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,17 +11,23 @@ import {
   Switch,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { borderRadius, spacing, shadow, colors } from '@/theme/colors';
+import { borderRadius, spacing, shadow } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '@/context/SettingsContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/context/AuthContext';
+import { cardsApi } from '@/api/cards';
 
 export default function AddCardScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useSettings();
   const { colors, typography } = useTheme();
+  const { token } = useAuth();
   const a = t.addCard;
 
   const [cardNumber, setCardNumber] = useState('');
@@ -30,6 +36,17 @@ export default function AddCardScreen() {
   const [cvv, setCvv] = useState('');
   const [setAsDefault, setSetAsDefault] = useState(false);
   const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
+  const [saving, setSaving] = useState(false);
+  const [isFirstCard, setIsFirstCard] = useState(true);
+  const [checkingCards, setCheckingCards] = useState(true);
+
+  useEffect(() => {
+    if (!token) return;
+    cardsApi.getMyCards(token).then((cards) => {
+      setIsFirstCard(cards.length === 0);
+      if (cards.length === 0) setSetAsDefault(true);
+    }).catch(() => {}).finally(() => setCheckingCards(false));
+  }, [token]);
 
   const formatCardNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '').slice(0, 16);
@@ -48,22 +65,73 @@ export default function AddCardScreen() {
   const detectCardType = (number: string) => {
     const cleaned = number.replace(/\s/g, '');
     if (cleaned.startsWith('4')) return 'Visa';
-    if (cleaned.startsWith('5')) return 'Mastercard';
+    if (/^5[1-5]/.test(cleaned)) return 'Mastercard';
+    if (/^3[47]/.test(cleaned)) return 'Amex';
+    if (/^6(?:011|5)/.test(cleaned)) return 'Discover';
+    if (/^3(?:0[0-5]|[68])/.test(cleaned)) return 'Diners';
+    if (/^35/.test(cleaned)) return 'JCB';
     return null;
   };
 
-  const handleSave = () => {
+  const validateExpiry = (month: number, year: number): string | null => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    if (year < currentYear) return 'La tarjeta ya está vencida (año anterior al actual)';
+    if (year === currentYear && month < currentMonth) return 'La tarjeta ya está vencida (mes anterior al actual)';
+    return null;
+  };
+
+  const handleSave = async () => {
     const cleaned = cardNumber.replace(/\s/g, '');
     if (cleaned.length < 16 || !cardHolder || expiry.length < 5 || cvv.length < 3) {
       Alert.alert(a.error, a.fillAllFields);
       return;
     }
 
-    Alert.alert(
-      a.cardSaved,
-      a.cardSavedMsg,
-      [{ text: t.common.ok, onPress: () => router.back() }]
-    );
+    if (!token) {
+      Alert.alert(a.error, 'Debes iniciar sesión para guardar una tarjeta');
+      return;
+    }
+
+    const [expMonth, expYear] = expiry.split('/');
+    const month = parseInt(expMonth, 10);
+    const year = 2000 + parseInt(expYear, 10);
+
+    const expiryError = validateExpiry(month, year);
+    if (expiryError) {
+      Alert.alert('Fecha de vencimiento inválida', expiryError);
+      return;
+    }
+
+    const brand = detectCardType(cleaned) || 'Otro';
+
+    setSaving(true);
+    try {
+      await cardsApi.createCard(token, {
+        brand,
+        last_four: cleaned.slice(-4),
+        exp_month: month,
+        exp_year: year,
+        cardholder_name: cardHolder.trim(),
+        is_default: setAsDefault,
+      });
+      Alert.alert(
+        a.cardSaved,
+        a.cardSavedMsg,
+        [{ text: t.common.ok, onPress: () => router.back() }]
+      );
+    } catch (e: any) {
+      const message = e?.message || '';
+      if (message.includes('exp_month') || message.includes('exp_year') || message.includes('vencida')) {
+        Alert.alert('Fecha inválida', 'La fecha de vencimiento ingresada no es válida.');
+      } else {
+        Alert.alert(a.error, 'No se pudo guardar la tarjeta. Intenta de nuevo.');
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const cardBrand = detectCardType(cardNumber);
@@ -72,7 +140,7 @@ export default function AddCardScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary.default} />
 
-      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default, paddingTop: insets.top + spacing.md }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
         </TouchableOpacity>
@@ -207,7 +275,8 @@ export default function AddCardScreen() {
             <Text style={[styles.defaultLabel, { flex: 1, fontSize: typography.sizes.sm, color: colors.text.secondary, marginLeft: spacing.sm, marginRight: spacing.sm, fontFamily: typography.family.regular }]}>{a.setAsDefault}</Text>
             <Switch
               value={setAsDefault}
-              onValueChange={setSetAsDefault}
+              onValueChange={isFirstCard ? undefined : setSetAsDefault}
+              disabled={isFirstCard}
               trackColor={{ false: colors.border.default, true: colors.secondary.default }}
             />
           </View>
@@ -219,9 +288,13 @@ export default function AddCardScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity style={[styles.saveButton, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.secondary.default, borderRadius: borderRadius.md, paddingVertical: spacing.md, ...shadow.md }]} onPress={handleSave}>
-            <Ionicons name="checkmark" size={20} color={colors.primary.contrast} />
-            <Text style={[styles.saveButtonText, { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, color: colors.primary.contrast, marginLeft: spacing.sm, fontFamily: typography.family.semibold }]}>{a.saveCard}</Text>
+          <TouchableOpacity style={[styles.saveButton, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.secondary.default, borderRadius: borderRadius.md, paddingVertical: spacing.md, ...shadow.md }]} onPress={handleSave} disabled={saving}>
+            {saving ? (
+              <ActivityIndicator size="small" color={colors.primary.contrast} />
+            ) : (
+              <Ionicons name="checkmark" size={20} color={colors.primary.contrast} />
+            )}
+            <Text style={[styles.saveButtonText, { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, color: colors.primary.contrast, marginLeft: spacing.sm, fontFamily: typography.family.semibold }]}>{saving ? 'Guardando...' : a.saveCard}</Text>
           </TouchableOpacity>
         </View>
         <View style={{ height: spacing.xxl }} />
@@ -237,7 +310,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
   backButton: { padding: spacing.xs },

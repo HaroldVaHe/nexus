@@ -120,6 +120,26 @@ export interface SearchFilters {
   seats?: number;
 }
 
+export interface SavedCard {
+  id: string;
+  brand: string;
+  last_four: string;
+  exp_month: number;
+  exp_year: number;
+  cardholder_name: string;
+  is_default: boolean;
+  created_at: string;
+}
+
+export interface SabanaCoinsLedgerEntry {
+  id: string;
+  amount: number;
+  type: 'earned' | 'spent' | 'redeemed' | 'bonus';
+  description: string | null;
+  reference_id: string | null;
+  created_at: string;
+}
+
 export interface PaymentCard {
   id: string;
   last_four: string;

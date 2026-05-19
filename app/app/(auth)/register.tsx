@@ -11,6 +11,7 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LoginButton } from '@/components/LoginButton';
 import { borderRadius, spacing, colors } from '@/theme/colors';
@@ -23,6 +24,7 @@ import { showAlert } from '@/utils/alert';
 import { useTheme } from '@/hooks/useTheme';
 
 export default function RegisterScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login } = useAuth();
   const { t } = useSettings();
@@ -148,7 +150,7 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary.dark} />
-      <View style={[styles.header, { backgroundColor: colors.primary.default }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary.default, paddingTop: insets.top + spacing.md }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={[styles.backButtonText, { color: colors.primary.contrast, fontSize: typography.sizes.xl }]}>←</Text>
         </TouchableOpacity>
@@ -289,7 +291,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md,
     paddingBottom: spacing.md,
   },
   backButton: { padding: spacing.xs },

@@ -3,11 +3,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '@/context/SettingsContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 
 export default function TabsLayout() {
   const { t } = useSettings();
   const { colors, typography, spacing } = useTheme();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const roles = user?.roles || [];
   const isPassenger = roles.includes('passenger');
@@ -24,8 +27,8 @@ export default function TabsLayout() {
           borderTopColor: colors.border.default,
           borderTopWidth: 1,
           paddingTop: spacing.xs,
-          paddingBottom: spacing.sm,
-          height: 60,
+          paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, spacing.sm) : spacing.sm,
+          height: Platform.OS === 'android' ? 60 + Math.max(insets.bottom, spacing.sm) : 60,
           elevation: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },

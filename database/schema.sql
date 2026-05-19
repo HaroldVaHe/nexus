@@ -203,19 +203,36 @@ CREATE TABLE notifications (
 );
 
 CREATE TABLE user_devices (
-    id              UUID                PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id         UUID                NOT NULL REFERENCES users(id),
-    expo_push_token VARCHAR(255)        NOT NULL,
-    platform        VARCHAR(10)         NOT NULL CHECK (platform IN ('ios', 'android')),
-    is_active       BOOLEAN             NOT NULL DEFAULT TRUE,
-    created_at      TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
+  id              UUID                PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id         UUID                NOT NULL REFERENCES users(id),
+  expo_push_token VARCHAR(255)        NOT NULL,
+  platform        VARCHAR(10)         NOT NULL CHECK (platform IN ('ios', 'android')),
+  is_active       BOOLEAN             NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT uq_user_token UNIQUE (user_id, expo_push_token)
+  CONSTRAINT uq_user_token UNIQUE (user_id, expo_push_token)
 );
 
 -- =====================================================
--- 9. INDEXES FOR PERFORMANCE
+-- 9. SAVED CARDS
+-- =====================================================
+
+CREATE TABLE saved_cards (
+  id              UUID                PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id         UUID                NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  brand           VARCHAR(50)         NOT NULL,
+  last_four       VARCHAR(4)          NOT NULL,
+  exp_month       INTEGER             NOT NULL CHECK (exp_month >= 1 AND exp_month <= 12),
+  exp_year        INTEGER             NOT NULL,
+  cardholder_name VARCHAR(255)        NOT NULL,
+  is_default      BOOLEAN             NOT NULL DEFAULT FALSE,
+  created_at      TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ         NOT NULL DEFAULT NOW()
+);
+
+-- =====================================================
+-- 10. INDEXES FOR PERFORMANCE
 -- =====================================================
 
 -- Vehicles search indexes
@@ -257,8 +274,11 @@ CREATE INDEX idx_sabana_coins_type ON sabana_coins_ledger(type);
 CREATE INDEX idx_user_devices_user_id ON user_devices(user_id);
 CREATE INDEX idx_user_devices_token ON user_devices(expo_push_token);
 
+-- Saved cards indexes
+CREATE INDEX idx_saved_cards_user_id ON saved_cards(user_id);
+
 -- =====================================================
--- 10. TRIGGERS FOR AUTOMATED FIELDS
+-- 11. TRIGGERS FOR AUTOMATED FIELDS
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -287,6 +307,10 @@ CREATE TRIGGER trigger_payments_updated_at
 
 CREATE TRIGGER trigger_user_devices_updated_at
     BEFORE UPDATE ON user_devices
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_saved_cards_updated_at
+    BEFORE UPDATE ON saved_cards
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Auto-decrement available_seats when booking is confirmed
@@ -359,7 +383,7 @@ CREATE TRIGGER trigger_increment_total_trips
     FOR EACH ROW EXECUTE FUNCTION increment_total_trips();
 
 -- =====================================================
--- 11. SEED DATA (INITIAL REVIEW TAGS)
+-- 12. SEED DATA (INITIAL REVIEW TAGS)
 -- =====================================================
 
 INSERT INTO review_tags (name, category) VALUES
@@ -375,7 +399,7 @@ INSERT INTO review_tags (name, category) VALUES
     ('flexible con horario', 'comportamiento');
 
 -- =====================================================
--- 12. COMMENTS FOR DOCUMENTATION
+-- 13. COMMENTS FOR DOCUMENTATION
 -- =====================================================
 
 COMMENT ON TABLE users IS 'Core user table for verified university members';
@@ -387,3 +411,4 @@ COMMENT ON TABLE reviews IS 'User ratings and reviews after completed trips';
 COMMENT ON TABLE sabana_coins_ledger IS 'Ledger for Sabana Coins incentive transactions';
 COMMENT ON TABLE notifications IS 'Push and in-app notifications for users';
 COMMENT ON TABLE user_devices IS 'Device tokens for push notification delivery';
+COMMENT ON TABLE saved_cards IS 'Saved card references for quick payments';

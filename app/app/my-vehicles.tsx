@@ -14,6 +14,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { borderRadius, spacing, shadow } from '@/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +25,7 @@ import { useAuth } from '@/context/AuthContext';
 import { vehiclesApi, Vehicle } from '@/api/vehicles';
 
 export default function MyVehiclesScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { colors, typography } = useTheme();
   const { t } = useSettings();
@@ -146,7 +148,7 @@ export default function MyVehiclesScreen() {
     </TouchableOpacity>
   );
 
-  const modalPaddingTop = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + spacing.md : spacing.md;
+  const modalPaddingTop = insets.top + spacing.md;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.default }]}>
