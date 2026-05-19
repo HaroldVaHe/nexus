@@ -7,11 +7,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LoginButton } from '@/components/LoginButton';
 import { borderRadius, spacing, typography } from '@/theme/colors';
