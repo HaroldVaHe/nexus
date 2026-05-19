@@ -7,7 +7,7 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import HeaderMenu from '@/components/HeaderMenu';
 import { useTheme } from '@/hooks/useTheme';
@@ -18,6 +18,7 @@ type TabHeaderProps = {
 };
 
 export default function TabHeader({ children }: TabHeaderProps) {
+  const router = useRouter();
   const { colors, typography } = useTheme();
   const insets = useSafeAreaInsets();
 
