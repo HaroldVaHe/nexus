@@ -12,8 +12,12 @@
     "traffic:payments": "node scripts/simulate-payment-traffic.js",
     "traffic:jmeter": "powershell -ExecutionPolicy Bypass -File ../jmeter/run-payments.ps1",
     "traffic:jmeter:token": "node scripts/create-test-jwt.js",
+    "backup": "node scripts/backup.js",
+    "backup:now": "node scripts/backup.js --no-upload",
+    "restore": "node scripts/restore.js",
     "migration:generate": "typeorm migration:generate -d src/database/data-source.ts",
     "migration:run": "typeorm migration:run -d src/database/data-source.ts",
+    "migration:revert": "typeorm migration:revert -d src/database/data-source.ts",
     "schema:sync": "typeorm schema:sync -d src/database/data-source.ts"
   },
   "dependencies": {

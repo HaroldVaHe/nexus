@@ -1,0 +1,20 @@
+# =====================================================
+# Nexus — Daily Backup Cron Job
+# =====================================================
+# ONLY for Linux / WSL. On Windows, use:
+#   powershell -File crontab/schedule-task.ps1
+# =====================================================
+# Install:
+#   sudo cp crontab/nexus-backup /etc/cron.d/nexus-backup
+#   (or crontab crontab/nexus-backup)
+#
+# ── IMPORTANT ──
+# Replace "/path/to/nexus" with the actual path.
+# In WSL the project is at:
+#   /mnt/c/Users/varga/Documents/Github/nexus
+# =====================================================
+
+MAILTO=""
+
+# ── Bash via WSL ──
+0 3 * * * root cd /mnt/c/Users/varga/Documents/Github/nexus && /bin/bash scripts/backup.sh >> /var/log/nexus-backup.log 2>&1

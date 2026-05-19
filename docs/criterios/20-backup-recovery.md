@@ -35,18 +35,33 @@ pg_dump -U postgres -h localhost nexus > backup_2026-05-19.sql
 psql -U postgres -h localhost nexus < backup_2026-05-19.sql
 ```
 
-**Backup automático con cron (Linux):**
+**Backup automático (scripts en el proyecto):**
 
+| Script | Ubicación | Descripción |
+|---|---|---|
+| `backup.sh` | `scripts/backup.sh` | Bash — pg_dump + gzip + S3 + retención 30d |
+| `backup.js` | `api/scripts/backup.js` | Node.js cross-platform (Win/WSL) |
+| `restore.sh` | `scripts/restore.sh` | Bash — restaura con confirmación |
+| `restore.js` | `api/scripts/restore.js` | Node.js — restaura con decompresión |
+
+**npm scripts (api/):**
 ```bash
-# /etc/cron.daily/nexus-backup
-#!/bin/bash
-DATE=$(date +%Y-%m-%d)
-BACKUP_DIR=/backups/nexus
-mkdir -p $BACKUP_DIR
-pg_dump -U postgres nexus | gzip > $BACKUP_DIR/nexus-$DATE.sql.gz
+npm run backup              # Backup completo + S3 (si configurado)
+npm run backup:now          # Solo local, sin cloud
+npm run restore -- <file>   # Restaurar desde backup
+```
 
-# Eliminar backups mayores a 30 días
-find $BACKUP_DIR -name "*.sql.gz" -mtime +30 -delete
+**Programación automática:**
+- **Linux/WSL**: `crontab/nexus-backup` — cron diario a las 3 AM
+- **Windows**: `crontab/schedule-task.ps1` — Task Scheduler a las 3 AM
+
+**Almacenamiento externo (S3-compatible):**
+```bash
+# Configurar en .env
+BACKUP_S3_BUCKET=my-nexus-backups
+BACKUP_S3_ENDPOINT=https://s3.amazonaws.com
+BACKUP_AWS_ACCESS_KEY_ID=...
+BACKUP_AWS_SECRET_ACCESS_KEY=...
 ```
 
 ### 3.2 Tipos de backup
@@ -71,7 +86,7 @@ Para Nexus, una estrategia razonable:
 
 ### 3.4 Migraciones de base de datos
 
-Las migraciones son archivos que describen **cambios** en la estructura de la BD (agregar tablas, columnas, índices). En Nexus no se usan migraciones; el schema se aplica manualmente con `database/schema.sql`.
+Las migraciones son archivos que describen **cambios** en la estructura de la BD (agregar tablas, columnas, índices). En Nexus ahora se usa un enfoque híbrido: `database/schema.sql` sigue disponible, pero una migración inicial (`api/src/database/migrations/20260519000000-InitialSchema.ts`) captura todo el schema para que TypeORM pueda rastrear cambios futuros.
 
 **Por qué son importantes:**
 - Permiten versionar los cambios en la BD junto con el código
@@ -100,23 +115,30 @@ export class AddFacultyToUsers1680000000000 implements MigrationInterface {
 
 | Componente | Estado | Evidencia |
 |---|---|---|
-| **Backup automático** | ❌ | No hay scripts de backup en el proyecto |
-| **Cron jobs** | ❌ | No hay tareas programadas |
-| **Migraciones** | ❌ | `database/schema.sql` es el único fuente de verdad, no hay migraciones |
-| **Script de restore** | ❌ | No hay documentación ni scripts para restaurar |
-| **Almacenamiento externo** | ❌ | No hay integración con S3, Google Drive ni similar |
+| **Backup automático** | ✅ | `scripts/backup.sh` + `api/scripts/backup.js` |
+| **Cron jobs / Task Scheduler** | ✅ | `crontab/nexus-backup` (Linux/WSL) + `crontab/schedule-task.ps1` (Windows) |
+| **Migraciones** | ✅ | `api/src/database/migrations/20260519000000-InitialSchema.ts` |
+| **Script de restore** | ✅ | `scripts/restore.sh` + `api/scripts/restore.js` |
+| **Almacenamiento externo** | ✅ | S3-compatible vía `.env` (`BACKUP_S3_BUCKET`, `BACKUP_S3_ENDPOINT`, etc.) |
 | **Pruebas de recuperación** | ❌ | Nunca se ha probado restaurar desde backup |
 | **Documentación de DR** | ❌ | No hay plan de disaster recovery |
 
-### 4.1 Lo que existe (pero no es suficiente)
+### 4.1 Lo que existe
 
 - `database/schema.sql` — El schema completo de la BD (414 líneas). Se puede regenerar parte de la estructura, pero **los datos se perderían**
 - `api/src/config/database.config.ts` — Configuración de TypeORM con `synchronize: false`
-- Comandos en `api/package.json` para migraciones (no implementadas):
+- `api/src/database/migrations/20260519000000-InitialSchema.ts` — Migración inicial con todo el schema (idempotente sobre BD existente)
+- `api/scripts/backup.js` + `api/scripts/restore.js` — Scripts cross-platform (funcionan en Windows y WSL)
+- `scripts/backup.sh` + `scripts/restore.sh` — Scripts Bash para Linux/WSL
+- `crontab/nexus-backup` + `crontab/schedule-task.ps1` — Automatización diaria 3 AM
+- Comandos en `api/package.json`:
   ```json
+  "backup": "node scripts/backup.js",
+  "backup:now": "node scripts/backup.js --no-upload",
+  "restore": "node scripts/restore.js",
   "migration:generate": "typeorm migration:generate -d src/database/data-source.ts",
   "migration:run": "typeorm migration:run -d src/database/data-source.ts",
-  "schema:sync": "typeorm schema:sync -d src/database/data-source.ts"
+  "migration:revert": "typeorm migration:revert -d src/database/data-source.ts"
   ```
 
 ### 4.2 Datos críticos que perderías sin backup
@@ -157,15 +179,18 @@ find /backups/nexus -name "*.sql.gz" -mtime +30 -delete
 echo "Backup completado: ${BACKUP_FILE}.gz"
 ```
 
-### 4.4 Lo que hay que implementar
+### 4.4 Estado de implementación
 
-1. **Script de backup** (`scripts/backup.sh`) que haga pg_dump con compresión
-2. **Cron job** que ejecute el backup diariamente a las 3 AM
-3. **Almacenamiento externo** (AWS S3, Google Cloud Storage, o un segundo servidor)
-4. **Script de restore** (`scripts/restore.sh`) documentado y probado
-5. **Migraciones TypeORM** para reemplazar el schema.sql manual
-6. **Prueba de recuperación** al menos una vez al trimestre
+| # | Requisito | Estado |
+|---|---|---|
+| 1 | Script de backup (pg_dump + compresión) | ✅ `scripts/backup.sh` + `api/scripts/backup.js` |
+| 2 | Automatización diaria (3 AM) | ✅ `crontab/nexus-backup` + `crontab/schedule-task.ps1` |
+| 3 | Almacenamiento externo (S3) | ✅ Configurable vía `.env`, integrado en scripts |
+| 4 | Script de restore documentado | ✅ `scripts/restore.sh` + `api/scripts/restore.js` |
+| 5 | Migraciones TypeORM | ✅ Migración inicial creada, comandos en `package.json` |
+| 6 | Prueba de recuperación trimestral | ❌ Pendiente — hay que ejecutar `npm run restore` y verificar |
+| 7 | Documentación de disaster recovery | ❌ Pendiente — plan formal de DR
 
 ## Resumen
 
-Nexus no tiene backups, no tiene migraciones, y no hay plan de recuperación ante desastres. Si la base de datos se pierde hoy, se pierden **todos los datos** de usuarios, viajes, pagos y calificaciones. La estructura se puede recrear con `database/schema.sql`, pero los datos son irrecuperables. Esto es el riesgo más crítico del proyecto.
+Nexus ya tiene scripts de backup y restore (bash + Node.js cross-platform), automatización diaria (cron para Linux/WSL, Task Scheduler para Windows), migraciones TypeORM, y soporte para almacenamiento externo S3-compatible. La infraestructura está lista. Lo que **falta**: probar una restauración real y documentar un plan formal de disaster recovery. Sin esos dos pasos, aún hay riesgo de no poder recuperarse correctamente cuando ocurra un incidente.
